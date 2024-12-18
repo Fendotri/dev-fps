@@ -8,65 +8,66 @@ import { UserInputEventEnum } from '@src/gameplay/abstract/EventsEnum';
 import { UserInputEvent, UserInputEventPipe } from '@src/gameplay/pipes/UserinputEventPipe';
 import { Vector3 } from 'three';
 
-const STEPS_PER_FRAME = 5;
-const GRAVITY = 30;
-const vec3Util = new Vector3();
+const STEPS_PER_FRAME = 5; // Her karede yapılacak işlem sayısı (fiziksel hesaplamaların doğruluğunu artırmak için)
+const GRAVITY = 30; // Yerçekimi kuvveti
+const vec3Util = new Vector3(); // Vektör hesaplamaları için yardımcı vektör
 
 const config = {
-    groundControlFactor: 20.,
-    airControlFactor: 5.,
-    dampFactor: -10.,
-    movespeedFactor: 2.4
+    groundControlFactor: 20., // Yerdeyken oyuncunun hareketini kontrol etme faktörü
+    airControlFactor: 5., // Havadayken oyuncunun hareketini kontrol etme faktörü
+    dampFactor: -10., // Havanın oyuncu hızını azaltma oranı
+    movespeedFactor: 2.4 // Hareket hızını etkileyen faktör
 }
 
 /**
- * 移动控制器, 根据输入映射控制玩家的移动
+ * Hareket Kontrolörü - Kullanıcı girişine göre oyuncunun hareketini kontrol eder.
  */
 export class MovementController implements CycleInterface, LoopInterface {
 
-    playerOctree: Octree = GameContext.Physical.WorldOCTree; // 用于检测玩家碰撞场景的OCTree
-    playerCamera: THREE.Camera; // 玩家相机
-    playerCollider: Capsule; // 玩家碰撞模型
+    playerOctree: Octree = GameContext.Physical.WorldOCTree; // Oyuncu için dünya üzerindeki çarpışmaları kontrol etmek için kullanılan Octree
+    playerCamera: THREE.Camera; // Oyuncunun kamerası
+    playerCollider: Capsule; // Oyuncu için kapsül şeklinde bir çarpışma modelini temsil eder
 
-    playerOnFloor: boolean = true;
-    keyStates: Map<UserInputEventEnum, boolean> = new Map();
+    playerOnFloor: boolean = true; // Oyuncunun zeminde olup olmadığını kontrol eden değişken
+    keyStates: Map<UserInputEventEnum, boolean> = new Map(); // Kullanıcı girişlerini izlemek için kullanılan anahtar durumları haritası
 
-    playerVelocity: THREE.Vector3 = new Vector3(); // 玩家速度
-    playerDirection: THREE.Vector3 = new Vector3(); // 玩家键盘运动方向
+    playerVelocity: THREE.Vector3 = new Vector3(); // Oyuncunun hız vektörü
+    playerDirection: THREE.Vector3 = new Vector3(); // Oyuncunun hareket yönü
 
     init(): void {
+        // Başlatma işlemleri
+        this.playerOctree = GameContext.Physical.WorldOCTree; // Fiziksel dünya üzerinde çarpışmaları kontrol etmek için octree'yi alır
+        this.playerCamera = GameContext.Cameras.PlayerCamera; // Oyuncu kamerasını alır
+        this.playerCollider = new Capsule(new Vector3(0, 0.35, 0), new Vector3(0, 1.45, 0), 0.35); // Oyuncu için kapsül çarpışma modeli oluşturulur
 
-        this.playerOctree = GameContext.Physical.WorldOCTree;
-        this.playerCamera = GameContext.Cameras.PlayerCamera;
-        this.playerCollider = new Capsule(new Vector3(0, 0.35, 0), new Vector3(0, 1.45, 0), 0.35);
-
+        // Kullanıcı girişlerini dinleyen event listener ekler
         UserInputEventPipe.addEventListener(UserInputEvent.type, (e: CustomEvent) => {
             switch (e.detail.enum) {
                 case UserInputEventEnum.MOVE_FORWARD_DOWN:
-                    this.keyStates.set(UserInputEventEnum.MOVE_FORWARD_DOWN, true);
+                    this.keyStates.set(UserInputEventEnum.MOVE_FORWARD_DOWN, true); // İleri hareket başlatıldığında
                     break;
                 case UserInputEventEnum.MOVE_BACKWARD_DOWN:
-                    this.keyStates.set(UserInputEventEnum.MOVE_BACKWARD_DOWN, true);
+                    this.keyStates.set(UserInputEventEnum.MOVE_BACKWARD_DOWN, true); // Geri hareket başlatıldığında
                     break;
                 case UserInputEventEnum.MOVE_LEFT_DOWN:
-                    this.keyStates.set(UserInputEventEnum.MOVE_LEFT_DOWN, true);
+                    this.keyStates.set(UserInputEventEnum.MOVE_LEFT_DOWN, true); // Sol hareket başlatıldığında
                     break;
                 case UserInputEventEnum.MOVE_RIGHT_DOWN:
-                    this.keyStates.set(UserInputEventEnum.MOVE_RIGHT_DOWN, true);
+                    this.keyStates.set(UserInputEventEnum.MOVE_RIGHT_DOWN, true); // Sağ hareket başlatıldığında
                     break;
                 case UserInputEventEnum.MOVE_FORWARD_UP:
-                    this.keyStates.set(UserInputEventEnum.MOVE_FORWARD_DOWN, false);
+                    this.keyStates.set(UserInputEventEnum.MOVE_FORWARD_DOWN, false); // İleri hareket bırakıldığında
                     break;
                 case UserInputEventEnum.MOVE_BACKWARD_UP:
-                    this.keyStates.set(UserInputEventEnum.MOVE_BACKWARD_DOWN, false);
+                    this.keyStates.set(UserInputEventEnum.MOVE_BACKWARD_DOWN, false); // Geri hareket bırakıldığında
                     break;
                 case UserInputEventEnum.MOVE_LEFT_UP:
-                    this.keyStates.set(UserInputEventEnum.MOVE_LEFT_DOWN, false);
+                    this.keyStates.set(UserInputEventEnum.MOVE_LEFT_DOWN, false); // Sol hareket bırakıldığında
                     break;
                 case UserInputEventEnum.MOVE_RIGHT_UP:
-                    this.keyStates.set(UserInputEventEnum.MOVE_RIGHT_DOWN, false);
+                    this.keyStates.set(UserInputEventEnum.MOVE_RIGHT_DOWN, false); // Sağ hareket bırakıldığında
                     break;
-                case UserInputEventEnum.JUMP: // 跳跃
+                case UserInputEventEnum.JUMP: // Zıplama işlemi başlatıldığında
                     this.jump();
                     break;
             }
@@ -76,91 +77,91 @@ export class MovementController implements CycleInterface, LoopInterface {
     }
 
     callEveryFrame(deltaTime?: number, elapsedTime?: number): void {
-        const dt = Math.min(0.05, deltaTime) / STEPS_PER_FRAME; // 最小deltaTime
-        for (let i = 0; i < STEPS_PER_FRAME; i++) { // 在cpu中多次计算, 以免出现速度过快穿墙的问题
-            this.controls(dt); // 接受控制器输入控制身体方向
-            this.updatePlayer(dt); // 更新玩家位置
-            this.teleportPlayerIfOob(); // 检测玩家是否出了地图
+        const dt = Math.min(0.05, deltaTime) / STEPS_PER_FRAME; // DeltaTime'ı sınırla ve her karedeki adım sayısına böl
+        for (let i = 0; i < STEPS_PER_FRAME; i++) { // Fiziksel hesaplamaların doğruluğu için birden fazla adımda işlem yap
+            this.controls(dt); // Kullanıcı girişine göre hareket yönünü belirle
+            this.updatePlayer(dt); // Oyuncunun fiziksel konumunu güncelle
+            this.teleportPlayerIfOob(); // Oyuncu harita dışına çıkarsa konumunu sıfırla
         }
     }
 
     /**
-     * 身体方向控制
-     * @param deltaTime 帧间隔时间 
+     * Oyuncunun vücut yönünü kontrol etme
+     * @param deltaTime: Bir kare arasındaki zaman farkı
      */
     controls(deltaTime: number): void {
-        const airControlFactor = deltaTime * (this.playerOnFloor ? config.groundControlFactor : config.airControlFactor); // 在空中只有一点点的身体控制
-        this.playerDirection.set(0, 0, 0);
+        // Havadayken ve yerdeyken vücut hareketi kontrol faktörü hesaplanır
+        const airControlFactor = deltaTime * (this.playerOnFloor ? config.groundControlFactor : config.airControlFactor);
+        this.playerDirection.set(0, 0, 0); // Hareket yönünü sıfırla
         if (this.playerOnFloor) {
-            if (this.keyStates.get(UserInputEventEnum.MOVE_FORWARD_DOWN))
+            if (this.keyStates.get(UserInputEventEnum.MOVE_FORWARD_DOWN)) // İleri hareket
                 this.playerDirection.add(this.getForwardVector().normalize());
-            if (this.keyStates.get(UserInputEventEnum.MOVE_BACKWARD_DOWN))
+            if (this.keyStates.get(UserInputEventEnum.MOVE_BACKWARD_DOWN)) // Geri hareket
                 this.playerDirection.add(this.getForwardVector().normalize().multiplyScalar(-1));
-            if (this.keyStates.get(UserInputEventEnum.MOVE_LEFT_DOWN))
+            if (this.keyStates.get(UserInputEventEnum.MOVE_LEFT_DOWN)) // Sol hareket
                 this.playerDirection.add(this.getSideVector().normalize().multiplyScalar(-1));
-            if (this.keyStates.get(UserInputEventEnum.MOVE_RIGHT_DOWN))
+            if (this.keyStates.get(UserInputEventEnum.MOVE_RIGHT_DOWN)) // Sağ hareket
                 this.playerDirection.add(this.getSideVector().normalize());
-            if (this.playerDirection.lengthSq() > 1.)
-                this.playerDirection.normalize(); // 方向向量
+            if (this.playerDirection.lengthSq() > 1.) // Yön vektörünün uzunluğunu normalize et
+                this.playerDirection.normalize(); 
         }
-        this.playerVelocity.add(this.playerDirection.multiplyScalar(airControlFactor * config.movespeedFactor));
+        this.playerVelocity.add(this.playerDirection.multiplyScalar(airControlFactor * config.movespeedFactor)); // Hızı yön ile çarp
     }
 
     /**
-     * 碰撞检测玩家位置
-     * @param deltaTime 帧间隔时间
+     * Oyuncunun konumunu günceller ve çarpışmalarla kontrol eder
+     * @param deltaTime: Bir kare arasındaki zaman farkı
      */
     updatePlayer(deltaTime: number) {
 
-        // 对数 e^x
-        let damping = Math.exp(config.dampFactor * deltaTime) - 1;
+        let damping = Math.exp(config.dampFactor * deltaTime) - 1; // Hava direnci hesaplaması
 
-        if (!this.playerOnFloor) {
+        if (!this.playerOnFloor) { // Yerde değilse, yerçekimi etkisini uygula
             this.playerVelocity.y -= GRAVITY * deltaTime;
-            damping *= 0.1; // small air resistance
+            damping *= 0.1; // Havada küçük bir hava direnci
         }
 
-        this.playerVelocity.addScaledVector(this.playerVelocity, damping);
-        const deltaPosition = this.playerVelocity.clone().multiplyScalar(deltaTime);
-        this.playerCollider.translate(deltaPosition);
-        const result = this.playerOctree.capsuleIntersect(this.playerCollider);
+        this.playerVelocity.addScaledVector(this.playerVelocity, damping); // Hızın yavaşlamasını uygula
+        const deltaPosition = this.playerVelocity.clone().multiplyScalar(deltaTime); // Hareket miktarını hesapla
+        this.playerCollider.translate(deltaPosition); // Çarpışma modeline hareket uygula
+        const result = this.playerOctree.capsuleIntersect(this.playerCollider); // Çarpışma tespiti yap
         this.playerOnFloor = false;
         if (result) {
-            this.playerOnFloor = result.normal.y > 0;
-            if (!this.playerOnFloor) this.playerVelocity.addScaledVector(result.normal, - result.normal.dot(this.playerVelocity));
-            this.playerCollider.translate(result.normal.multiplyScalar(result.depth));
+            this.playerOnFloor = result.normal.y > 0; // Yerde olup olmadığını kontrol et
+            if (!this.playerOnFloor) this.playerVelocity.addScaledVector(result.normal, - result.normal.dot(this.playerVelocity)); // Zemin ile çarpışmayı hesapla
+            this.playerCollider.translate(result.normal.multiplyScalar(result.depth)); // Çarpışma derinliği kadar oyuncuyu taşı
         }
-        this.playerCamera.position.copy(this.playerCollider.end);
+        this.playerCamera.position.copy(this.playerCollider.end); // Kameranın pozisyonunu güncelle
 
     }
 
     /**
-     * 检测玩家是否跳出地图
+     * Oyuncu harita dışına çıktıysa konumunu sıfırlama
      */
     teleportPlayerIfOob() {
-        if (this.playerCamera.position.y <= -25) {
+        if (this.playerCamera.position.y <= -25) { // Eğer oyuncu harita dışına çıktıysa
             this.playerCollider.start.set(0, 0.35, 0);
             this.playerCollider.end.set(0, 1, 0);
-            this.playerCollider.radius = 0.35;
-            this.playerCamera.position.copy(this.playerCollider.end);
-            this.playerCamera.rotation.set(0, 0, 0);
+            this.playerCollider.radius = 0.35; // Kapsülün boyutunu sıfırla
+            this.playerCamera.position.copy(this.playerCollider.end); // Kameranın pozisyonunu sıfırla
+            this.playerCamera.rotation.set(0, 0, 0); // Kameranın rotasını sıfırla
         }
     }
 
     /**
-     * 获取相机正向的方向
-     * @returns THREE.Vector3 正向方向
+     * Kamera yönünü al (ileri yön)
+     * @returns THREE.Vector3: İleri yön vektörü
      */
     getForwardVector() {
-        this.playerCamera.getWorldDirection(vec3Util);
-        vec3Util.y = 0;
-        vec3Util.normalize();
+        this.playerCamera.getWorldDirection(vec3Util); // Kameranın dünya yönünü al
+        vec3Util.y = 0; // Y eksenindeki hareketi sıfırla
+        vec3Util.normalize(); // Yönü normalize et
         return vec3Util;
     }
 
     /**
-     * 获取相机侧向的方向
-     * @returns THREE.Vector3 侧向方向
+     * Kamera yönünü al (yan yön)
+     * @returns THREE.Vector3: Yan yön vektörü
      */
     getSideVector() {
         this.playerCamera.getWorldDirection(vec3Util);
@@ -171,7 +172,7 @@ export class MovementController implements CycleInterface, LoopInterface {
     }
 
     /**
-     * 跳跃
+     * zıplama
      */
     jump() {
         if (this.playerOnFloor) { this.playerVelocity.y = 8; }

@@ -1,20 +1,21 @@
 
-uniform sampler2D uSmokeT;
-uniform float uOpacityFactor;
+uniform sampler2D uSmokeT; // Duman dokusu
+uniform float uOpacityFactor; // Dumanın opaklık faktörü
 
-uniform float uDisappearTime;
-uniform float uFadeTime;
+uniform float uDisappearTime; // Dumanın kaybolmaya başlama zamanı
+uniform float uFadeTime; // Dumanın kaybolma süresi
 
-varying float vElapsed;
-varying float vRand;
+varying float vElapsed; // Geçen süre (dumanın var olma süresi)
+varying float vRand; // Rastgele değer (dönme için)
 
-// 我感觉该函数作为淡入淡出的函数非常不错
+// p-curve fonksiyonu, kaybolma sürecini düzgünleştirir
 float pcurve(float x,float a,float b)
 {
     float k=pow(a+b,a+b)/(pow(a,a)*pow(b,b));
     return k*pow(x,a)*pow(1.-x,b);
 }
 
+// Z ekseninde dönüş matrisi
 mat4 makeRotationZ(float theta)
 {
     return mat4(
@@ -27,13 +28,13 @@ mat4 makeRotationZ(float theta)
 
 void main(){
     
-    // shader优化
+    // Shader optimizasyonu: Eğer dumanın kaybolma süresi geçtiyse, shader'ı durdur
     
     if(vElapsed>uDisappearTime+uFadeTime){discard;}
     
     vec4 temp=vec4(1.);
     
-    // 旋转后取出贴图基本色
+    // Dumanı döndürme işlemi
     
     vec2 pointCoord=gl_PointCoord;
     pointCoord=pointCoord-vec2(.5);
@@ -41,10 +42,11 @@ void main(){
     vec4 colorFromT=texture2D(uSmokeT,randRotate.xy+vec2(.5));
     temp=colorFromT;
     
-    // 淡入淡出
+    // Kaybolma (fade) işlemi
     
     float fadeFactor=pcurve(vElapsed,uDisappearTime,uFadeTime);
     
+    // Sonuç rengini hesapla
     gl_FragColor=vec4(temp.rgb,temp.a*uOpacityFactor*fadeFactor);
     // gl_FragColor=vec4(vec3(1.),fadeFactor);
     

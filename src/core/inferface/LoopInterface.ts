@@ -1,12 +1,12 @@
 /**
- * 随着游戏帧渲染 会不断调用的接口
+ * Oyun karesi render edildikçe sürekli olarak çağrılacak arayüz
  */
 export type LoopInterface = {
 
     /**
-     * 游戏每帧渲染时会调用
-     * @param deltaTime 距离上一帧的间隔时间
-     * @param elapsedTime 距离第一帧循环的时间
+     * Oyun her kare render edildiğinde çağrılacak
+     * @param deltaTime Son kare ile arasındaki geçen süre
+     * @param elapsedTime İlk kareden itibaren geçen süre
      */
     callEveryFrame(deltaTime?: number, elapsedTime?: number): void;
     

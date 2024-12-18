@@ -3,16 +3,16 @@ import { PointLockEventEnum } from '../gameplay/abstract/EventsEnum';
 import { DomEventPipe, PointLockEvent } from '../gameplay/pipes/DomEventPipe';
 
 export class PointLock extends EventTarget {
-    static isLocked: boolean = false; // 是否锁定
+    static isLocked: boolean = false; // Kilitli mi
 
-    /** 监听 pointlock 事件: onMouseChange, onPointerlockChange, onPointerlockError */
+    /** pointlock olaylarını dinle: onMouseChange, onPointerlockChange, onPointerlockError */
     static pointLockListen() {
         GameContext.GameView.Container.ownerDocument.addEventListener('mousemove', this.onMouseChange);
         GameContext.GameView.Container.ownerDocument.addEventListener('pointerlockchange', this.onPointerlockChange);
         GameContext.GameView.Container.ownerDocument.addEventListener('pointerlockerror', this.onPointerlockError);
     }
 
-    /** 注销 pointlock 事件: onMouseChange, onPointerlockChange, onPointerlockError */
+    /** pointlock olaylarını iptal et: onMouseChange, onPointerlockChange, onPointerlockError */
     static pointLockDispose = function () {
         GameContext.GameView.Container.ownerDocument.removeEventListener('mousemove', this.onMouseChange);
         GameContext.GameView.Container.ownerDocument.removeEventListener('pointerlockchange', this.onPointerlockChange);

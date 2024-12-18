@@ -4,19 +4,18 @@ import { GameLogicEventPipe, WeaponEquipEvent } from '@src/gameplay/pipes/GameLo
 
 const v3Util = new Vector3();
 
-const cameraLookAt = new Vector3(0, 0, -1); // default camera lookAt
-const cameraUp = new Vector3(0, 1, 0); // default camera up
+const cameraLookAt = new Vector3(0, 0, -1); // Varsayılan kamera bakış yönü
+const cameraUp = new Vector3(0, 1, 0); // Varsayılan kamera üst yönü
 
 const chamberPositionUtil = new Vector3();
 const muzzlePositionUtil = new Vector3();
 
 /**
- * 监听武器切换事件并动态获取当前切换武器的弹膛/枪口在blender坐标中的位置;
- * 提供两个api分别可以动态计算出当前武器的弹膛/枪口位置 经过手部模型渲染层位置转换后 在 当前项目中的世界位置;  
- * 
- * 分别用于:
- * 1. 弹膛位置: 每次开枪时, 在世界位置放出烟雾特效
- * 2. 枪口位置: 曳光弹的初始位置
+ * Silah değiştirme olaylarını dinler ve geçerli silahın odak noktası ve namlu pozisyonunu
+ * Blender koordinat sistemindeki konumlarına göre dinamik olarak hesaplar.
+ * Bu iki API, sırasıyla:
+ * 1. Namlu pozisyonu: Her ateş ettiğinizde, dünyada duman efekti yaymak için kullanılır.
+ * 2. Silah namlu pozisyonu: Işık izi (tracer) mermisinin başlangıç noktası.
  */
 export class WeaponComponentsPositionUtil {
 
@@ -25,7 +24,7 @@ export class WeaponComponentsPositionUtil {
         if (!WeaponComponentsPositionUtil.instance) WeaponComponentsPositionUtil.instance = new WeaponComponentsPositionUtil();
         return WeaponComponentsPositionUtil.instance;
     }
-    handModelCamera: THREE.PerspectiveCamera = GameContext.Cameras.HandModelCamera; // 获取当前手模相机的位置
+    handModelCamera: THREE.PerspectiveCamera = GameContext.Cameras.HandModelCamera; // El modeli kamerasının mevcut konumunu alır
     playerCamera = GameContext.Cameras.PlayerCamera;
 
     chamberFrontDelta: number = 0;
@@ -42,18 +41,18 @@ export class WeaponComponentsPositionUtil {
 
     private constructor() {
 
-        // 计算出手部模型中枪膛位置转换到需要渲染场景的世界位置
-        GameLogicEventPipe.addEventListener(WeaponEquipEvent.type, (e: CustomEvent) => { // 监听当前武器切换事件
+        // Silah değiştirme olayını dinleyip, el modelinin pozisyonuna göre odak noktası ve namlu pozisyonunu hesaplar
+        GameLogicEventPipe.addEventListener(WeaponEquipEvent.type, (e: CustomEvent) => { // Silah değişim olayını dinler
             const _weaponInstance = WeaponEquipEvent.detail.weaponInstance;
-            if (_weaponInstance && _weaponInstance.chamberPosition) { // 如果存在更换的武器实例,判断是否有弹膛位置
-                v3Util.copy(_weaponInstance.chamberPosition); // 如果有弹膛位置就获取一下弹膛位置
-                // 然后更新一下弹膛和枪口位置
+            if (_weaponInstance && _weaponInstance.chamberPosition) { // Eğer silahın odak noktası (chamberPosition) varsa
+                v3Util.copy(_weaponInstance.chamberPosition); // Odak noktasını al
+                // Odak noktası ve namlu pozisyonunu günceller
                 this.chamberFrontDelta = v3Util.x - this.handModelCamera.position.x;
                 this.chamberRightDelta = v3Util.z - this.handModelCamera.position.z;
                 this.chamberDownDelta = v3Util.y - this.handModelCamera.position.y;
             }
 
-            // 枪口位置
+            // Namlu pozisyonu
             if (_weaponInstance && _weaponInstance.muzzlePosition) {
                 v3Util.copy(_weaponInstance.muzzlePosition);
                 this.muzzleFrontDelta = v3Util.x - this.handModelCamera.position.x;
@@ -64,14 +63,14 @@ export class WeaponComponentsPositionUtil {
     }
 
     /**
-     * 动态计算弹膛位置
-     * @returns 弹膛位置
+     * Silahın odak noktasının (chamber) dünya üzerindeki konumunu hesaplar.
+     * @returns Odak noktasının dünya koordinatlarındaki pozisyonu
      */
     public calculateChamberPosition(): THREE.Vector3 {
 
-        // 在切枪事件中已经确定了如下变量: frontDelta, rightDelta, downDelta;
+        // Silah değişim olayında zaten belirlenen değişkenler: frontDelta, rightDelta, downDelta
 
-        // 计算方向 frontDirection, rightDirection, downDirection
+        // Kameranın bakış yönü, sağ yönü ve yukarı yönü hesaplanır
 
         v3Util.copy(cameraLookAt);
         v3Util.applyEuler(this.playerCamera.rotation);
@@ -88,7 +87,7 @@ export class WeaponComponentsPositionUtil {
         v3Util.normalize();
         this.rightDirection.copy(v3Util);
 
-        // 渲染位置
+        // Odak noktası pozisyonunu hesaplar
 
         chamberPositionUtil.copy(this.playerCamera.position);
         chamberPositionUtil.addScaledVector(this.frontDirection, this.chamberFrontDelta); // 向前
@@ -100,14 +99,14 @@ export class WeaponComponentsPositionUtil {
     }
 
     /**
-     * 动态计算枪口位置
-     * @returns 枪口位置
+     * Silahın namlusunun (muzzle) dünya üzerindeki konumunu hesaplar.
+     * @returns Namlunun dünya koordinatlarındaki pozisyonu
      */
     public calculateMuzzlePosition(): THREE.Vector3 {
 
-        // 在切枪事件中已经确定了如下变量: frontDelta, rightDelta, downDelta;
+        // Silah değişim olayında zaten belirlenen değişkenler: frontDelta, rightDelta, downDelta;
 
-        // 计算方向 frontDirection, rightDirection, downDirection
+        // Kameranın bakış yönü, sağ yönü ve yukarı yönü hesaplanır
 
         v3Util.copy(cameraLookAt);
         v3Util.applyEuler(this.playerCamera.rotation);
@@ -124,12 +123,12 @@ export class WeaponComponentsPositionUtil {
         v3Util.normalize();
         this.rightDirection.copy(v3Util);
 
-        // 渲染位置
+        // Namlunun pozisyonunu hesaplar
 
         muzzlePositionUtil.copy(this.playerCamera.position);
-        muzzlePositionUtil.addScaledVector(this.frontDirection, this.muzzleFrontDelta); // 向前
-        muzzlePositionUtil.addScaledVector(this.rightDirection, this.muzzleRightDelta); // 右方
-        muzzlePositionUtil.addScaledVector(this.downDirection, this.muzzleDownDelta); // 下方
+        muzzlePositionUtil.addScaledVector(this.frontDirection, this.muzzleFrontDelta); // Öne doğru hareket
+        muzzlePositionUtil.addScaledVector(this.rightDirection, this.muzzleRightDelta); // Sağ yönde hareket
+        muzzlePositionUtil.addScaledVector(this.downDirection, this.muzzleDownDelta); // Aşağıya doğru hareket
 
         return muzzlePositionUtil;
 

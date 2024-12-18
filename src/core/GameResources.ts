@@ -9,7 +9,7 @@ export const GameResources = {
     resourceMap: new Map<string, THREE.Object3D | THREE.AnimationMixer | THREE.AnimationClip | THREE.AnimationAction | GLTF>(),
 }
 
-/** 初始化所有资源 */
+/** Tüm kaynakları başlat */
 export const initResource = async () => {
 
     const hands = GameResources.loader.loadAsync('/role/base/hand_base.glb');
@@ -18,7 +18,7 @@ export const initResource = async () => {
 
     const [gltf1, gltf2, gltf3] = await Promise.all([hands, role, map]);
 
-    // 手部模型
+    // El modeli
     let armature: THREE.Object3D;
     gltf1.scene.traverse((child: Object3D) => {
         if (child.name === 'Armature') {
@@ -33,15 +33,15 @@ export const initResource = async () => {
 
     const animationMixer = new AnimationMixer(armature);
     GameResources.resourceMap.set('AnimationMixer', animationMixer);
-    gltf1.animations.forEach((animationClip: THREE.AnimationClip) => { // 生成AnimationActions
+    gltf1.animations.forEach((animationClip: THREE.AnimationClip) => { // AnimationActions oluşturuluyor
         const animationAction = animationMixer.clipAction(animationClip, armature);
         GameResources.resourceMap.set(animationClip.name, animationAction);
     })
 
-    // 人物模型
+    // Karakter modeli
     GameResources.resourceMap.set('Role', gltf2);
 
-    // 地图模型
+    // Harita modeli
     GameResources.resourceMap.set('Map', gltf3);
 
     Promise.resolve();

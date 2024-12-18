@@ -9,10 +9,12 @@
 </head>
 
 <body>
-<script>
-    if (window.location.pathname === '/')
-            window.location.href = '/game/'
-</script>
+    <script>
+        // Redirect user from the home page to '/game/' if currently on the root path '/'
+        if (window.location.pathname === '/') {
+            window.location.href = '/game/';
+        }
+    </script>
 </body>
 
 </html>

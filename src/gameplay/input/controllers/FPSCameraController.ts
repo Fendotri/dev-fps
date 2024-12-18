@@ -3,45 +3,49 @@ import { CycleInterface } from '@src/core/inferface/CycleInterface';
 import { DomEventPipe, PointLockEvent } from '@src/gameplay/pipes/DomEventPipe';
 import { PointLockEventEnum } from '@src/gameplay/abstract/EventsEnum';
 
-const mouseConfig = { // 鼠标参数配置
-    dpi: 1000,
-    mouseSensitivity: 0.5
+// Mouse ayarları: DPI ve hassasiyet
+const mouseConfig = { 
+    dpi: 1000, // DPI: Ekranda bir inç başına kaç piksel olduğu
+    mouseSensitivity: 0.5 // Fare hassasiyeti, daha küçük bir değer daha hassas hareket sağlar
 }
 
-const _PI_2 = Math.PI / 2; // PI/2
+const _PI_2 = Math.PI / 2; // PI/2: Kameranın yatay (x) ve dikey (y) rotasında sınırları belirlemek için kullanılır
 
 /**
- * FPS 相机控制类
- * 改变相机轴序'YXZ'; Y轴Yaw,左y+,右y-; X轴Pitch,上x+,下x-
+ * FPS Kamera Kontrol Sınıfı
+ * Bu sınıf, FPS oyunlarında kamerayı fare hareketleriyle kontrol etmeyi sağlar.
+ * Kamera rotasını 'YXZ' sırasına göre değiştirir; Y ekseni Yaw (yatay hareket), X ekseni Pitch (dikey hareket) için kullanılır.
  */
 export class FPSCameraController extends EventTarget implements CycleInterface {
 
-    domElement: HTMLElement;
-    camera: THREE.Camera;
+    domElement: HTMLElement; // Oyun görünümünün konteyneri
+    camera: THREE.Camera; // FPS kamerası
 
     init(): void {
-
+        // Kamera, GameContext üzerinden alınır
         this.camera = GameContext.Cameras.PlayerCamera;
 
-        // 轴向使用YXZ主要有下面的好处 ThreeJscamera是Yup的,因此YXZ第一个值代表着水平运动契合screenCoord的XY坐标
-
+        // Kameranın rotalama sırası 'YXZ' olarak ayarlanır, bu FPS oyunlarında daha yaygın bir kullanım şeklidir
         this.camera.rotation.order = 'YXZ';
 
+        // DOM elementini GameContext'ten alır
         this.domElement = GameContext.GameView.Container;
 
         const scope = this;
 
+        // Fare hareketiyle ilgili event listener eklenir
         DomEventPipe.addEventListener(PointLockEvent.type, function (e: CustomEvent) {
             switch (e.detail.enum) {
                 case PointLockEventEnum.MOUSEMOVE:
-                    const { dpi, mouseSensitivity } = mouseConfig; // 计算参数
+                    const { dpi, mouseSensitivity } = mouseConfig; // Fare hassasiyetini ve DPI ayarlarını al
 
-                    // 屏幕两轴右下角为正方向
-                    const screenTrasformX = e.detail.movementX / dpi * mouseSensitivity; // 屏幕横坐标
-                    const screenTrasformY = e.detail.movementY / dpi * mouseSensitivity; // 屏幕纵坐标
+                    // Ekran koordinatları, fare hareketinin X ve Y eksenlerine göre hesaplanır
+                    const screenTrasformX = e.detail.movementX / dpi * mouseSensitivity; // Fare hareketinin yatay dönüşümü
+                    const screenTrasformY = e.detail.movementY / dpi * mouseSensitivity; // Fare hareketinin dikey dönüşümü
 
-                    // 改变相机位置
-                    scope.camera.rotation.y = scope.camera.rotation.y - screenTrasformX;
+                    // Kameranın yatay (yaw) ve dikey (pitch) rotasını fare hareketine göre değiştir
+                    scope.camera.rotation.y = scope.camera.rotation.y - screenTrasformX; // Y ekseninde (yatay)
+                    // X ekseninde (dikey) hareketin sınırları -PI/2 ve +PI/2 arasına sıkıştırılır
                     scope.camera.rotation.x = Math.max(_PI_2 - Math.PI, Math.min(_PI_2 - 0, scope.camera.rotation.x - screenTrasformY));
                     break;
 

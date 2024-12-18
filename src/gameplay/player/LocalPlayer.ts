@@ -14,59 +14,72 @@ import { dealWithRoleMaterial, dealWithRoleTexture } from '@src/core/lib/threejs
 import { CycleInterface } from '../../core/inferface/CycleInterface';
 import { MeshBasicMaterial } from 'three';
 
+// Oyuncunun karakterinin dokusu yükleniyor ve işleniyor
 const roleTexture = GameContext.GameResources.textureLoader.load('/role/role.TF2.heavy.png');
-dealWithRoleTexture(roleTexture);
+dealWithRoleTexture(roleTexture); // Texture işleme
 const roleMaterial = new MeshBasicMaterial({ map: roleTexture });
-dealWithRoleMaterial(roleMaterial);
+dealWithRoleMaterial(roleMaterial); // Material işleme
 
 /**
- * 本地玩家
+ * Yerel oyuncu sınıfı
+ * Oyuncunun tüm etkileşimlerini (giriş, hareket, envanter, silahlar) yönetir.
  */
 export class LocalPlayer implements CycleInterface, LoopInterface {
-
+    // Singleton deseni için yerel oyuncu örneği
     private static localPlayerInstance: LocalPlayer;
+    // Private constructor, tek bir örnek oluşturulmasına izin verir
     private constructor() { }
+    // Singleton getInstance metodu
     public static getInstance(): LocalPlayer {
         if (!this.localPlayerInstance) this.localPlayerInstance = new LocalPlayer();
         return this.localPlayerInstance;
     }
 
+    // Yerel oyuncu başlatma fonksiyonu
     init() {
-        // 用户输入系统
+        // Kullanıcı giriş sistemini başlat
         this.userInputSystem = new UserInputSystem();
-        this.weaponSystem = WeaponSystem.getInstance(); // 武器系统
+        this.weaponSystem = WeaponSystem.getInstance(); // Silah sistemi
 
+        // Kamera kontrolcüsü başlatılıyor
         this.cameraController = new FPSCameraController(); // 相机控制器
         this.cameraController.init();
+
+        // Hareket kontrolcüsü başlatılıyor
         this.movementController = new MovementController(); // 移动控制器
         this.movementController.init();
+
+        // Envanter sistemi başlatılıyor
         this.inventorySystem = new InventorySystem(); // 物品栏
         this.inventorySystem.init();
 
-        // 枪械初始化
-        const ak47 = new AK47(); // 生成一把AK
-        this.inventorySystem.pickUpWeapon(ak47); // 捡起AK
-        const usp = new USP(); // 生成USP
-        this.inventorySystem.pickUpWeapon(usp); // 捡起USP
-        const m9 = new M9(); // 生成USP
-        this.inventorySystem.pickUpWeapon(m9); // 捡起USP
+        // Silahları başlat ve envantere ekle
+        const ak47 = new AK47();
+        this.inventorySystem.pickUpWeapon(ak47); // AK47'yi al
+        const usp = new USP();
+        this.inventorySystem.pickUpWeapon(usp); // USP'yi al
+        const m9 = new M9(); 
+        this.inventorySystem.pickUpWeapon(m9); // M9'u al
 
-        // 装备主武器
+        // Ana silahı tak
         this.inventorySystem.switchEquipment(InventorySlotEnum.Primary);
     }
 
-    userInputSystem: UserInputSystem; // 处理输入事件
-    inventorySystem: InventorySystem; // 处理物品栏信息
-    weaponSystem: WeaponSystem; // 处理武器信息(弹道计算,落点计算,武器动画)
+    // Sistem bileşenleri
+    userInputSystem: UserInputSystem; // Kullanıcı girişlerini işler
+    inventorySystem: InventorySystem; // Envanter ve silah bilgilerini yönetir
+    weaponSystem: WeaponSystem; // Silahlarla ilgili bilgileri ve animasyonları yönetir
 
-    cameraController: FPSCameraController; // 相机控制器
-    movementController: MovementController; // 位移控制器
+    cameraController: FPSCameraController; // FPS kamera kontrolü
+    movementController: MovementController; // Oyuncu hareketi yönetimi
 
-    roleMaterial: THREE.Material = roleMaterial; // 玩家网格当前的材质(角色)
+    // Oyuncunun materyali (görsel) 
+    roleMaterial: THREE.Material = roleMaterial; // Oyuncu materyali
 
+    // Frame başına güncellemeleri işler
     callEveryFrame(deltaTime?: number, elapsedTime?: number): void {
-        this.movementController.callEveryFrame(deltaTime, elapsedTime);
-        this.inventorySystem.callEveryFrame(deltaTime, elapsedTime);
+        this.movementController.callEveryFrame(deltaTime, elapsedTime); // Hareket kontrolcüsünü güncelle
+        this.inventorySystem.callEveryFrame(deltaTime, elapsedTime); // Envanter sistemini güncelle
     }
 
 }

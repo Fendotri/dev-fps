@@ -15,21 +15,21 @@ import { CycleInterface } from './inferface/CycleInterface';
 import { LoopInterface } from './inferface/LoopInterface';
 
 const GameObjects: Array<LoopInterface | CycleInterface> = [
-    new DOMLayer(), // DOM层
-    new SkyLayer(), // 天空盒
-    new HandModelLayer(), // 手模
-    new CrosshairLayer(), // 准星
-    new BulletHoleLayer(), // 弹孔
-    new BulletHoleFlashLayer(), // 单孔闪光
-    new BulletHoleAshLayer(), // 单孔尘
-    new ChamberBulletShell(), // 弹舱弹壳
-    new ChamberSmokeLayer(), // 弹舱烟雾
-    new MuzzleFlashLayer(), // 枪口闪光
-    new GLViewportLayer(), // WEBGL渲染层
+    new DOMLayer(), // DOM katmanı
+    new SkyLayer(), // Gökyüzü kutusu
+    new HandModelLayer(), // El modeli
+    new CrosshairLayer(), // Nişangah
+    new BulletHoleLayer(), // Mermi deliği
+    new BulletHoleFlashLayer(), // Tek delik flaşı
+    new BulletHoleAshLayer(), // Tek delik külü
+    new ChamberBulletShell(), // Mermi kabuğu
+    new ChamberSmokeLayer(), // Mermi kabuğu dumanı
+    new MuzzleFlashLayer(), // Namlu flaşı
+    new GLViewportLayer(), // WEBGL render katmanı
     new LevelMirage(),
     LocalPlayer.getInstance(),
 ];
 
-/** 游戏封装类型对象 */
+/** Oyun paketleme tip nesnesi */
 export const GameObjectsMap = new Map<string, LoopInterface | CycleInterface>();
 GameObjects.forEach(item => { GameObjectsMap.set(item.constructor.name, item); })

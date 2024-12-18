@@ -2,7 +2,7 @@ import { UserInputEventEnum } from '../abstract/EventsEnum';
 import { UserInputEventPipe, UserInputEvent, } from '../pipes/UserinputEventPipe';
 
 /** 
- * 处理玩家输入按键映射的控制器
+ *  İşlemci, oyuncu giriş tuşları ile hareketleri kontrol eder
  */
 export class UserInputSystem {
 
@@ -11,67 +11,67 @@ export class UserInputSystem {
     }
 
     /**
-     * 浏览器环境下默认的按键绑定
+     * Tarayıcı ortamında varsayılan tuş bağlamalarını yapar
      */
     browserEnviromentDefaultBinding() {
-        // 鼠标事件
+        // Fare olayları
         document.addEventListener('mousedown', (e: MouseEvent) => {
-            if (e.button === 0) { // 鼠标左键绑定开火状态
+            if (e.button === 0) { // Fare sol tuşu ile ateş etme durumunu bağlar
                 UserInputEvent.detail.enum = UserInputEventEnum.BUTTON_TRIGGLE_DOWN;
-                UserInputEventPipe.dispatchEvent(UserInputEvent);
+                UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
             }
         })
         document.addEventListener('mouseup', (e: MouseEvent) => {
-            if (e.button === 0) { // 鼠标左键绑定开火状态
+            if (e.button === 0) { // Fare sol tuşunun bırakılması ile ateş etme durumunu bağlar
                 UserInputEvent.detail.enum = UserInputEventEnum.BUTTON_TRIGGLE_UP;
-                UserInputEventPipe.dispatchEvent(UserInputEvent);
+                UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
             }
         })
 
-        // 键盘事件
+        // Klavye olayları
         document.addEventListener('keydown', (e: KeyboardEvent) => {
             switch (e.code) {
-                case 'KeyR': // 换子弹
+                case 'KeyR': // Mermi değiştir (yeniden yükle)
                     UserInputEvent.detail.enum = UserInputEventEnum.BUTTON_RELOAD;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
 
-                case 'Digit1': // 物品切换
+                case 'Digit1': // Birinci silahı seç
                     UserInputEvent.detail.enum = UserInputEventEnum.BUTTON_SWITCH_PRIMARY_WEAPON;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'Digit2':
+                case 'Digit2': // İkinci silahı seç
                     UserInputEvent.detail.enum = UserInputEventEnum.BUTTON_SWITCH_SECONDARY_WEAPON;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'Digit3':
+                case 'Digit3': // Yakın dövüş silahını seç
                     UserInputEvent.detail.enum = UserInputEventEnum.BUTTON_SWITCH_MALEE_WEAPON;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'KeyQ':
+                case 'KeyQ': // Son silaha geç
                     UserInputEvent.detail.enum = UserInputEventEnum.BUTTON_SWITCH_LAST_WEAPON;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
 
-                case 'KeyW': // 玩家移动
+                case 'KeyW': // Oyuncu ileri hareket
                     UserInputEvent.detail.enum = UserInputEventEnum.MOVE_FORWARD_DOWN;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'KeyA':
+                case 'KeyA': // Oyuncu sola hareket
                     UserInputEvent.detail.enum = UserInputEventEnum.MOVE_LEFT_DOWN;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'KeyS':
+                case 'KeyS': // Oyuncu geri hareket
                     UserInputEvent.detail.enum = UserInputEventEnum.MOVE_BACKWARD_DOWN;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'KeyD':
+                case 'KeyD': // Oyuncu sağa hareket
                     UserInputEvent.detail.enum = UserInputEventEnum.MOVE_RIGHT_DOWN;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'Space': // 跳跃
+                case 'Space': // Oyuncu zıplar
                     UserInputEvent.detail.enum = UserInputEventEnum.JUMP;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
 
             }
@@ -79,21 +79,21 @@ export class UserInputSystem {
         })
         document.addEventListener('keyup', (e: KeyboardEvent) => {
             switch (e.code) {
-                case 'KeyW':
+                case 'KeyW': // İleri hareket serbest bırakıldı
                     UserInputEvent.detail.enum = UserInputEventEnum.MOVE_FORWARD_UP;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'KeyA':
+                case 'KeyA': // Sola hareket serbest bırakıldı
                     UserInputEvent.detail.enum = UserInputEventEnum.MOVE_LEFT_UP;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'KeyS':
+                case 'KeyS': // Geri hareket serbest bırakıldı
                     UserInputEvent.detail.enum = UserInputEventEnum.MOVE_BACKWARD_UP;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
-                case 'KeyD':
+                case 'KeyD': // Sağa hareket serbest bırakıldı
                     UserInputEvent.detail.enum = UserInputEventEnum.MOVE_RIGHT_UP;
-                    UserInputEventPipe.dispatchEvent(UserInputEvent);
+                    UserInputEventPipe.dispatchEvent(UserInputEvent); // Olayı gönderir
                     break;
             }
         })

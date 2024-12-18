@@ -4,24 +4,26 @@ import { DomPipe } from '@src/core/DOMPipe';
 export const GameLogicEventPipe = new DomPipe();
 
 /**
- * 武器系统开火事件
+ * Silah sistemi ateş etme olayı
+ * Bu olay, silah ateşlendiğinde tetiklenir.
  */
 export const WeaponFireEvent = new CustomEvent<{
-    bPointRecoiledScreenCoord: THREE.Vector2, // 子弹经过后坐力计算后在屏幕上实际出弹点
-    weaponInstance: WeaponInterface, // 武器ID
+    bPointRecoiledScreenCoord: THREE.Vector2, // Merminin geri tepme hesaplamasından sonra ekran üzerindeki gerçek çıkış noktası
+    weaponInstance: WeaponInterface, // Ateş eden silahın örneği
 }>('weapon fired', {
     detail: {
-        bPointRecoiledScreenCoord: undefined,
-        weaponInstance: undefined,
+        bPointRecoiledScreenCoord: undefined, // Başlangıçta geri tepme noktası belirtilmemiştir
+        weaponInstance: undefined, // Başlangıçta silah örneği belirtilmemiştir
     }
 });
 
 /**
- * 武器系统切换时间
+ * Silah sistemi ekipman değiştirme olayı
+ * Bu olay, bir silah ekipmanı değiştirildiğinde tetiklenir.
  */
 export const WeaponEquipEvent = new CustomEvent<{
-    weaponInstance: WeaponInterface, // 武器
+    weaponInstance: WeaponInterface, // Yeni ekipman olarak seçilen silah
 }>(
     'waepon equiped', {
-    detail: { weaponInstance: undefined, }
+    detail: { weaponInstance: undefined, } // Başlangıçta ekipmanlı silah belirtilmemiştir
 });

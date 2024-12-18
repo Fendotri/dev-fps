@@ -6,12 +6,12 @@ import { PointLock } from './PointLock';
 import { Octree } from 'three/examples/jsm/math/Octree';
 import { GameResources } from './GameResources';
 
-// 初始化上下文环境设置
+// Başlangıçtaki konteyner ortamının ayarlanması
 
-const container = document.querySelector('#game-view') as HTMLElement; // 绑定dom视图容器
-const initialContainerStatus = getContainerStatus(container); // 初始化时视图容器状态
+const container = document.querySelector('#game-view') as HTMLElement; // DOM görsel konteynerini bağlama
+const initialContainerStatus = getContainerStatus(container); // Başlangıçta görsel konteynerin durumu
 
-// 初始化threejs渲染器
+// Three.js render'ı başlatma
 
 const renderer = new WebGL1Renderer({ antialias: true, alpha: false, precision: 'highp', powerPreference: 'high-performance' });
 renderer.toneMapping = ACESFilmicToneMapping;
@@ -21,117 +21,117 @@ renderer.setPixelRatio(initialContainerStatus.pixcelRatio);
 renderer.setClearColor(new Color(0xffffff));
 renderer.domElement.className = 'webgl';
 
-// 初始化threejs效果合成器, r136改动了材质, 导致必须手动指定两个renderTarget的贴图的encoding
+// Three.js efekt bileştirici başlatma, r136'daki materyal değişiklikleri nedeniyle, iki render hedefinin dokularının encoding'ini manuel olarak ayarlamak gerekir
 
 const effectCompser = new EffectComposer(renderer, new WebGLRenderTarget(initialContainerStatus.width, initialContainerStatus.height, { stencilBuffer: true }));
 effectCompser.renderTarget1.texture.encoding = sRGBEncoding;
 effectCompser.renderTarget2.texture.encoding = sRGBEncoding;
 
-/** 上下文环境 */
+/** Konteyner ortamı */
 export const GameContext = {
 
-    /** 视图 */
+    /** Görünüm */
     GameView: {
 
-        /** DOM容器 */
+        /** DOM konteyneri */
         Container: <HTMLElement>container,
 
-        /** 渲染器 */
+        /** Render'ı temsil eder */
         Renderer: renderer,
 
-        /** 效果合成器 */
+        /** Efekt bileştirici */
         EffectComposer: effectCompser,
     },
 
-    /** 游戏循环 */
+    /** Oyun döngüsü */
     GameLoop: {
 
-        /** 时钟帮助对象 */
+        /** Zamanlayıcı yardımcı objesi */
         Clock: new Clock(),
 
-        /** 渲染循环id */
+        /** Render döngüsü ID'si */
         LoopID: <number><any>undefined,
 
-        /** 暂停状态 */
+        /** Duraklatma durumu */
         Pause: <boolean><any>true,
 
-        /** 注册的循环对象 */
+        /** Kayıtlı döngü objeleri */
         LoopInstance: <LoopInterface[]><any>[],
     },
 
-    /** 相机 */
+    /** Kameralar */
     Cameras: {
 
-        /** 玩家观察场景的相机 */
+        /** Oyuncunun sahneyi izlediği kamera */
         PlayerCamera: new PerspectiveCamera(65, initialContainerStatus.width / initialContainerStatus.height, 0.1, 1000),
 
-        /** 玩家观察手部模型的相机 */
+        /** Oyuncunun el modeli izlediği kamera */
         HandModelCamera: new PerspectiveCamera(75, initialContainerStatus.width / initialContainerStatus.height, 0.001, 5),
 
-        /** UI正交相机 */
+        /** UI için dikey kamera */
         UICamera: new OrthographicCamera(-50, 50, 50, -50, 0.001, 1001), // 正交相机: 准星 UI 等
     },
 
-    /** 场景 */
+    /** Sahne */
     Scenes: {
 
-        /** 天空盒 */
+        /** Gökyüzü kutusu */
         Skybox: new Scene(),
 
-        /** 交互场景 */
+        /** Etkileşimli sahne */
         Level: new Scene(),
 
-        /** 碰撞场景 */
+        /** Çarpışma sahnesi */
         Collision: new Scene(),
 
-        /** 手部模型 */
+        /** El modeli sahnesi */
         Handmodel: new Scene(),
 
-        /** UI贴脸场景 */
+        /** UI yüzey sahnesi */
         UI: new Scene(),
 
-        /** 精灵场景 */
+        /** Sprite sahnesi */
         Sprites: new Scene(),
     },
 
-    /** 物理部分 */
+    /** Fiziksel sistem */
     Physical: {
         WorldOCTree: <Octree>undefined,
     },
 
-    /** 屏幕锁 */
+    /** Nokta kilidi */
     PointLock,
 
     GameResources,
 
-    /** 生命周期接口对象 */
+    /** Yaşam döngüsü arayüz objesi */
     CycleObjects: [],
 
-    /** 渲染循环周期接口对象 */
+    /** Render döngüsü arayüz objesi */
     LoopObjects: [],
 
 }
 
-/** 监听窗口变化 */
+/** Pencere boyutunun değişmesini dinle */
 export const onWindowResize = () => {
 
-    // 获取容器宽高
+    // Konteynerin genişlik ve yüksekliğini al
     const { width, height, pixcelRatio } = getContainerStatus(GameContext.GameView.Container);
 
-    // 渲染器设置宽高
+    // Render için boyutları ayarla
     GameContext.GameView.Renderer.setSize(width, height);
     GameContext.GameView.Renderer.setPixelRatio(pixcelRatio);
 
-    // 透视相机
+    // Perspektif kamerayı güncelle
     Array.isArray(Object.keys(GameContext.Cameras)) && Object.keys(GameContext.Cameras).forEach(key => {
         const camera = GameContext.Cameras[key];
         if (camera.aspect) camera.aspect = width / height;
         if (camera.updateProjectionMatrix) camera.updateProjectionMatrix();
     });
 
-    // 效果合成器下的输入, 输出纹素画布大小
+    // Efekt bileştirici altındaki giriş ve çıkış dokusu boyutlarını ayarla
     GameContext.GameView.EffectComposer.renderTarget1.setSize(width * pixcelRatio, height * pixcelRatio);
     GameContext.GameView.EffectComposer.renderTarget2.setSize(width * pixcelRatio, height * pixcelRatio);
 }
 onWindowResize();
-window.addEventListener('resize', onWindowResize); // 窗口变动注册事件
+window.addEventListener('resize', onWindowResize); // Pencere değişikliklerini dinlemek için olay kaydetme

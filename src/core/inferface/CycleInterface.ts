@@ -1,10 +1,10 @@
 
 /**
- * 随着游戏框架的初始化 运行等过程会调用的一系列接口
+ * Oyun çerçevesinin başlatılması ve çalışma süreci ile çağrılacak bir dizi arayüz
  */
 export type CycleInterface = {
 
-    /** 当游戏框架初始化时会被调用 */
+    /** Oyun çerçevesi başlatıldığında çağrılacak */
     init(): void;
 
 }

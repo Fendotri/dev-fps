@@ -1,40 +1,43 @@
-uniform float uTime;
-uniform float uSpeed;
+uniform float uTime; // Geçen zaman
+uniform float uSpeed; // Dumanın hareket hızı
 
-attribute float generTime;
-attribute float rand;
-attribute vec3 direction;
+attribute float generTime; // Dumanın oluşturulma zamanı
+attribute float rand; // Rastgele faktör (büyüklük ve hareket için)
+attribute vec3 direction; // Dumanın hareket yönü
 
-varying float vElapsed;
-varying float vRand;
+varying float vElapsed; // Geçen süre
+varying float vRand; // Rastgele faktör
 
-vec3 upperDirection=vec3(0,1,0);
+vec3 upperDirection=vec3(0,1,0); // Yukarıya doğru yön
 
+// "almost identity" fonksiyonu, bir değer ve sabit arasındaki farkı hesaplar
 float almostIdentity(float x,float n)
 {
-    return sqrt(x*x+n);
+    return sqrt(x*x+n); // Çok küçük bir değişim ekler
 }
 
 void main(){
     
-    // 传递变量
+    // Geçen zamanı hesapla
     
     float elapsed=uTime-generTime;
     vElapsed=elapsed;
     vRand=rand;
     
-    // 计算位置(烟雾处于运动状态)
+    // Dumanın hareketi
     
     vec3 position1=position;
-    position1+=direction*uSpeed*elapsed;// S = v*t
-    position1+=upperDirection*elapsed*(rand*.3+.1);
+    position1+=direction*uSpeed*elapsed; // Dumanın ana hareketi (hız ve yön)
+    position1+=upperDirection*elapsed*(rand*.3+.1); // Yukarıya doğru yayılma (rastgele etki)
     
+    // Kamera dönüşüm matrisleri ile pozisyonu hesapla
     gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(position1,1.);
     
-    gl_PointSize=512.;// 烟雾基础大小
-    gl_PointSize*=.3*rand+.7;// 烟雾大小需要添加一些随机值看上去更加真实
-    gl_PointSize*=almostIdentity(elapsed,1.);// 烟雾扩散(增大点大小)
+    // Dumanın boyutunu hesapla
+    gl_PointSize=512.; // Başlangıç boyutu 
+    gl_PointSize*=.3*rand+.7; // Rastgele büyüklük ekle
+    gl_PointSize*=almostIdentity(elapsed,1.); // Zamanla büyüme
     vec4 positionViewCoord=viewMatrix*modelMatrix*vec4(position1,1.);
-    gl_PointSize*=(1./-positionViewCoord.z);// 点大小受到距离远近影响
+    gl_PointSize*=(1./-positionViewCoord.z); // Kamera uzaklığına göre boyut
     
 }

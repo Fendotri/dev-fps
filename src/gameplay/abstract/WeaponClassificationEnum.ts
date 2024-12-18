@@ -1,12 +1,12 @@
 /** 
- * 武器类型 
+ * Silah türleri
  */
 export enum WeaponClassificationEnum {
-    Rifle, // 步枪
-    SniperRifle, // 狙击步枪
-    Pistol, // 手枪
-    Malee, // 匕首
-    SMG, // 微冲
-    Shotgun, // 霰弹
-    Machinegun, // 机枪
+    Rifle, // Tüfek
+    SniperRifle, // Keskin nişancı tüfeği
+    Pistol, // Tabanca
+    Malee, // Melee silah (Bıçak vb.)
+    SMG, // Hafif makineli tüfek
+    Shotgun, // Pompalı tüfek
+    Machinegun, // Makineli tüfek
 }

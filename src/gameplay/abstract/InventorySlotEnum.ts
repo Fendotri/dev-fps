@@ -1,36 +1,36 @@
 import { WeaponClassificationEnum } from './WeaponClassificationEnum';
 
 /**
- * 物品栏类型
+ * Envanter slot türleri
  */
 export enum InventorySlotEnum {
-    Hands, // 空手
-    Primary, // 主武器
-    Secondary, // 副武器
-    Malee, // 匕首
+    Hands, // Boş el
+    Primary, // Ana silah
+    Secondary, // Yan silah
+    Malee, // Melee silah (Bıçak vb.)
 }
 
 
 /**
- * 判断对应的武器分类类型属于的武器槽位
- * @param weaponClassificationEnum : 武器分类类型
- * @returns :Inventory 武器槽位
+ * İlgili silah sınıflandırma türünün hangi envanter slotuna ait olduğunu belirler
+ * @param weaponClassificationEnum : Silah sınıflandırma türü
+ * @returns : Envanter slotu (silahın hangi slotta yer alacağı)
  */
 export function mapIventorySlotByWeaponClassficationEnum(weaponClassificationEnum: WeaponClassificationEnum): InventorySlotEnum {
     switch (weaponClassificationEnum) {
         case WeaponClassificationEnum.Rifle:
-            return InventorySlotEnum.Primary;
+            return InventorySlotEnum.Primary; // Tüfek -> Ana silah slotu
         case WeaponClassificationEnum.SniperRifle:
-            return InventorySlotEnum.Primary;
+            return InventorySlotEnum.Primary; // Keskin nişancı tüfeği -> Ana silah slotu
         case WeaponClassificationEnum.Pistol:
-            return InventorySlotEnum.Secondary;
+            return InventorySlotEnum.Secondary; // Tabanca -> Yan silah slotu
         case WeaponClassificationEnum.Malee:
-            return InventorySlotEnum.Malee;
+            return InventorySlotEnum.Malee; // Melee silah -> Melee slotu
         case WeaponClassificationEnum.SMG:
-            return InventorySlotEnum.Primary;
+            return InventorySlotEnum.Primary; // Hafif makineli tüfek -> Ana silah slotu
         case WeaponClassificationEnum.Shotgun:
-            return InventorySlotEnum.Primary;
+            return InventorySlotEnum.Primary; // Pompalı tüfek -> Ana silah slotu
         case WeaponClassificationEnum.Machinegun:
-            return InventorySlotEnum.Primary;
+            return InventorySlotEnum.Primary; // Makineli tüfek -> Ana silah slotu
     }
 }

@@ -1,9 +1,9 @@
 uniform float uOpacity;
-uniform float uFlashTime;//闪烁时间
+uniform float uFlashTime; // Yanıp sönme süresi
 uniform sampler2D uFlashT;
 
 varying float vRand;
-varying float elapsed;// 传递弹点存在时间
+varying float elapsed; // Atış noktasının varlık süresi
 
 mat4 makeRotationZ(float theta)
 {

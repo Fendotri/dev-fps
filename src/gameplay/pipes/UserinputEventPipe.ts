@@ -2,13 +2,14 @@ import { DomPipe } from '@src/core/DOMPipe';
 import { UserInputEventEnum } from '../abstract/EventsEnum';
 
 /**
- * 记录所有用户输入操作的事件
+ * Tüm kullanıcı giriş işlemlerini kaydetmek için kullanılan pipe
  */
 export const UserInputEventPipe = new DomPipe();
 
 /**
- * 用户输入事件
+ * Kullanıcı giriş olayını temsil eden event
+ * Bu olay, kullanıcıdan gelen çeşitli girişleri yakalamak ve işlemek için kullanılır.
  */
 export const UserInputEvent = new CustomEvent<{ enum: UserInputEventEnum }>('input', {
-    detail: { enum: undefined }
+    detail: { enum: undefined } // Olayın detayında kullanılan enum, başlangıçta 'undefined'
 });

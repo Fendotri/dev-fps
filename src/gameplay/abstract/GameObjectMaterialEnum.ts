@@ -1,15 +1,13 @@
-// 游戏物体材质系统
+// Oyun nesnesi materyal sistemi
 
 export enum GameObjectMaterialEnum {
 
-    PlayerHead, // 头
-    PlayerChest, // 胸膛
-    PlayerUpperLimb, // 上肢
-    PlayerLowerLimb, // 下肢
-    PlayerBelly, // 肚子
+    PlayerHead, // Oyuncu başı
+    PlayerChest, // Oyuncu göğsü
+    PlayerUpperLimb, // Oyuncu üst kolu
+    PlayerLowerLimb, // Oyuncu alt kolu
+    PlayerBelly, // Oyuncu karın bölgesi
 
-    GrassGround, // 草地
+    GrassGround, // Çimenli zemin
 
 }
-
-

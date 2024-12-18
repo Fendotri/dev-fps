@@ -1,9 +1,9 @@
 uniform float uOpacity;
 uniform float uExitTime;
-uniform float uFadeTime;// 渐变消失时间
+uniform float uFadeTime; // Geçiş kaybolma süresi
 uniform sampler2D uAshT;
 
-varying float vElapsed;// 传递弹点生成时间
+varying float vElapsed; // Atış noktası oluşturulma zamanı
 varying float vRand;
 
 mat4 makeRotationZ(float theta)
@@ -18,15 +18,15 @@ mat4 makeRotationZ(float theta)
 
 void main()
 {
-    float fadeMask=step(uExitTime,vElapsed);// 开始渐变消失为1
+    float fadeMask=step(uExitTime,vElapsed); // Geçiş kaybolma başladığında 1 olur
     fadeMask*=(vElapsed-uExitTime)/uFadeTime;
     
-    if(uOpacity-fadeMask<0.){// 提升一下性能
+    if(uOpacity-fadeMask<0.){ // Performansı biraz artır
         discard;
     }
     
     vec4 randRotate=makeRotationZ(vRand*3.14)*vec4(gl_PointCoord-vec2(.5),0.,1.);// gl.POINTS, (left,top):(0,0) (right, bottom): (1, 1)
-    vec4 colorFromT=texture2D(uAshT,randRotate.xy+vec2(.5));// matrix 是用(0, 0)点做中心点进行旋转的
+    vec4 colorFromT=texture2D(uAshT,randRotate.xy+vec2(.5)); // Matris, (0, 0) noktasını merkez alarak dönüşüm yapar
     
     gl_FragColor=vec4(colorFromT.rgb,colorFromT.a*(uOpacity-fadeMask)*vRand);
 }

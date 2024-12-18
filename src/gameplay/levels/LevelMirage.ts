@@ -12,24 +12,24 @@ class LevelMirage implements CycleInterface {
 
     init() {
 
-        const boardScene = GameContext.Scenes.Level;
+        const boardScene = GameContext.Scenes.Level; // Oyun sahnesini alıyoruz (Level sahnesi)
 
-        // 地图生成物理octree
+        // Fiziksel octree haritasını oluştur
         const octTree: Octree = new Octree();
-        GameContext.Physical.WorldOCTree = octTree;
-        const gltf = GameContext.GameResources.resourceMap.get('Map') as GLTF;
-        const boardMesh = gltf.scene.children[0]; // 需要渲染的网格
-        const physicsMesh = gltf.scene; // 需要计算物理信息的场景
-        octTree.fromGraphNode(physicsMesh); // 将物理信息加载到内存中
+        GameContext.Physical.WorldOCTree = octTree; // Fiziksel dünya octree'sini kaydet
+        const gltf = GameContext.GameResources.resourceMap.get('Map') as GLTF; // 'Map' adıyla kaynakları alıyoruz
+        const boardMesh = gltf.scene.children[0]; // Render edilecek olan ana ağ meshini alıyoruz
+        const physicsMesh = gltf.scene; // Fiziksel hesaplamalar için gereken tüm sahneyi alıyoruz
+        octTree.fromGraphNode(physicsMesh); // Fiziksel veriyi memoriye yüklüyoruz
 
-        // 地图材质处理
-        const bakedTexture = GameContext.GameResources.textureLoader.load('/levels/t.mirage.baked.75.jpg');
-        dealWithBakedTexture(boardMesh as THREE.Mesh, bakedTexture); // 使用工具给渲染网格绑定材质
-        anisotropy8x(boardMesh as THREE.Mesh);
+        // Harita dokusunun işlenmesi
+        const bakedTexture = GameContext.GameResources.textureLoader.load('/levels/t.mirage.baked.75.jpg'); // Önceden pişirilmiş doku yüklüyoruz
+        dealWithBakedTexture(boardMesh as THREE.Mesh, bakedTexture); // Baked texture'ı mesh'e bağlıyoruz
+        anisotropy8x(boardMesh as THREE.Mesh); // Anizotropik filtrelemeyi 8x olarak ayarlıyoruz
 
-        // 绑定游戏逻辑材质
-        boardMesh.userData['GameObjectMaterialEnum'] = GameObjectMaterialEnum.GrassGround;
-        boardScene.add(boardMesh);
+        // Oyun mantığına uygun materyali bağla
+        boardMesh.userData['GameObjectMaterialEnum'] = GameObjectMaterialEnum.GrassGround; // Mesh'e oyun materyali ekliyoruz
+        boardScene.add(boardMesh); // Sahneye render edilecek olan mesh'i ekliyoruz
     }
 
 }

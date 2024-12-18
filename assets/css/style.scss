@@ -1,4 +1,4 @@
-/** 苹果浏览器下拉特效是超过元素总高度的 */
+/** Apple tarayıcısında animasyonlar, öğenin toplam yüksekliğini aşar */
 html,
 body {
     overflow: hidden;
@@ -13,7 +13,7 @@ body {
         position: absolute;
         top: 0;
         left: 0;
-        outline: none; // 苹果浏览器会在canvas周围有一圈蓝边
+        outline: none; /* Apple tarayıcısında canvas'ın etrafında mavi bir kenarlık olabilir */
         z-index: 1;
     }
 }

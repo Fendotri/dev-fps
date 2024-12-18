@@ -1,29 +1,29 @@
-attribute float rand;// 给弹孔随机大小
+attribute float rand; // Atış deliği için rastgele boyut
 attribute float generTime;
 
-uniform float uTime;// 当前时间
-uniform float uScale;// 弹孔大小
+uniform float uTime; // Mevcut zaman
+uniform float uScale; // Atış deliği boyutu
 
-varying float vElapsed;// 传递弹点生成时间
+varying float vElapsed; // Atış noktasının oluşturulma süresi
 varying float vRand;
 
 void main()
 {
     vRand=rand;
-    vElapsed=uTime-generTime;// 已经存在时间
+    vElapsed=uTime-generTime; // Zaman farkı (var olma süresi)
     
-    // 计算弹孔点的位置
+    // Atış deliği noktasının konumunu hesapla
     vec3 position1=position;
-    position1+=normalize(cameraPosition-position)*.01;//朝着相机方向移动(基础)
-    position1+=normal*.01;// 朝着命中的面的法线方向移动
-    gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(position1,1.);// 点位置
+    position1+=normalize(cameraPosition-position)*.01; // Kamera yönüne doğru hareket (temel)
+    position1+=normal*.01; // Çarpma yüzeyinin normaline doğru hareket
+    gl_Position=projectionMatrix*viewMatrix*modelMatrix*vec4(position1,1.); // Nokta konumu
     
-    // 计算弹孔点的大小
+    // Atış deliği noktasının boyutunu hesapla
     
-    gl_PointSize=32.;// 弹孔默认大小
-    gl_PointSize+=(48.*rand);// 弹孔默认大小受到随机值影响后的值
-    gl_PointSize*=uScale;// 点大小受到uniform自定义值影响
+    gl_PointSize=32.; // Atış deliği varsayılan boyutu
+    gl_PointSize+=(48.*rand); // Atış deliği boyutu, rastgele değere göre etkilenir
+    gl_PointSize*=uScale; // Boyut, uniform özelleştirilmiş değere göre etkilenir
     vec4 viewPosition=viewMatrix*vec4(position1,1.);
-    gl_PointSize*=(1./-viewPosition.z);// 点大小受到距离远近影响
+    gl_PointSize*=(1./-viewPosition.z); // Nokta boyutu, uzaklığa göre etkilenir
     
 }

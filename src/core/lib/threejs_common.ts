@@ -1,5 +1,3 @@
-// 该文件定义threejs相关通用函数
-
 import {
     AddEquation, CustomBlending, FrontSide, LinearFilter, Material,
     Mesh, MeshBasicMaterial, NearestFilter, OneMinusSrcAlphaFactor,
@@ -8,80 +6,80 @@ import {
 
 /**
  * 
- * 如果mesh的材质使用blender烘焙出的纹素作为顶点颜色, 使用这个函数处理
- * 1. 设置贴图的编码为SRGB
- * 2. 关闭flipY
+ * Eğer mesh'in materyali Blender ile hazırlanmış bir yansıma (baked) dokusu kullanıyorsa,
+ * bu fonksiyon dokuyu işlemek için kullanılır.
+ * 1. Dokunun kodlamasını SRGB olarak ayarlar.
+ * 2. flipY'yi kapatır.
  * 
- * @param mesh 网格体
- * @param texture 贴图
+ * @param mesh Mesh objesi
+ * @param texture Dokusu
  */
 export const dealWithBakedTexture = (mesh: Mesh, texture: Texture) => {
-    texture.encoding = sRGBEncoding;
-    texture.flipY = false;
+    texture.encoding = sRGBEncoding; // SRGB kodlaması
+    texture.flipY = false; // Y ekseninde ters çevirme yapılmaz
     const mtl = new MeshBasicMaterial({ map: texture });
-    mesh.material = mtl;
+    mesh.material = mtl; // Yeni materyali mesh'e uygular
 }
 
 /**
- * 对某网格实例(包括其孩子)开启8x各向异性
- * @param mesh  网格体
+ * Mesh objesindeki ve altındaki tüm mesh'lerde 8x anisotropik filtrelemeyi etkinleştirir.
+ * @param mesh Mesh objesi
  */
 export const anisotropy8x = (mesh: Mesh) => {
-    mesh.traverse((child: Mesh) => { // 遍历
+    mesh.traverse((child: Mesh) => { // Mesh objesinin altındaki tüm çocukları gez
         if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
+            child.castShadow = true; // Gölgeleri yansıtsın
+            child.receiveShadow = true; // Gölgeleri alsın
             const _material = child.material as MeshBasicMaterial;
-            if (_material.map) _material.map.anisotropy = 8;// 材质开启采样(8x各向异性)
+            if (_material.map) _material.map.anisotropy = 8; // 8x anisotropik filtreleme
         }
     });
 }
 
 /**
- * 处理MineCraft风格的角色贴图
- * 1. NearestFilter mag, minFilter 取色使用最近像素点原则
- * 2. 使用SRGBencoding
- * 3. 关闭flipY
- * @param texture 贴图
+ * Minecraft tarzı karakter dokuları için işleme.
+ * 1. NearestFilter mag, minFilter ile en yakın piksel alınır (bloke piksel efekti).
+ * 2. SRGB encoding kullanılır.
+ * 3. flipY kapatılır.
+ * @param texture Dokusu
  */
 export const dealWithRoleTexture = (texture: Texture) => {
-    texture.generateMipmaps = false; // 不需要在显存中生成mipmap
-    texture.magFilter = NearestFilter;
-    texture.minFilter = NearestFilter;
-    texture.encoding = sRGBEncoding; // srgb编码
-    texture.flipY = false; // 不需要颠倒贴图
+    texture.generateMipmaps = false; // Mipmap oluşturulmaz
+    texture.magFilter = NearestFilter; // En yakın piksel alma
+    texture.minFilter = NearestFilter; // En yakın piksel alma
+    texture.encoding = sRGBEncoding; // SRGB kodlaması
+    texture.flipY = false; // Y ekseninde ters çevirme yapılmaz
 }
 
 
 /**
- * 处理MineCraft风格的角色材质
+ * Minecraft tarzı karakter materyali için işlem.
+ * 1. İki taraflı render edilir.
+ * 2. Alfa testi yapılır (gizli alanları ve şeffaflık için).
+ * 3. Özelleştirilmiş renk karıştırma yapılır.
  * 
- * 1. 渲染两面
- * 2. alpha测试
- * 3. 颜色混合模式
- * 
- * @param material 材质
+ * @param material Materyal objesi
  */
 export const dealWithRoleMaterial = (material: Material) => {
-    material.side = FrontSide; // 渲染两面
-    material.alphaTest = 1; // alpha检测, 两层材质的minecraft材质图是可以做衣服效果的
-    material.blending = CustomBlending;  // 使用threeJs默认的Custom混合模式
-    material.blendEquation = AddEquation; //default
-    material.blendSrc = SrcAlphaFactor; //default
-    material.blendDst = OneMinusSrcAlphaFactor; //default
+    material.side = FrontSide; // İki taraflı render
+    material.alphaTest = 1; // Alfa testi, şeffaflık için
+    material.blending = CustomBlending;  // Özelleştirilmiş karıştırma
+    material.blendEquation = AddEquation; // Varsayılan karıştırma denklemi
+    material.blendSrc = SrcAlphaFactor; // Varsayılan kaynak faktörü
+    material.blendDst = OneMinusSrcAlphaFactor; // Varsayılan hedef faktörü
 }
 
 /**
- * 处理武器贴图
- * 1. LinearFilter mag, minFilter 取色使用线性取色原则
- * 2. 使用SRGBencoding
- * 3. 关闭flipY
- * @param texture 贴图
+ * Silah dokuları için işlem.
+ * 1. LinearFilter mag, minFilter ile pürüzsüz renk alma yapılır.
+ * 2. SRGB encoding kullanılır.
+ * 3. flipY kapatılır.
+ * @param texture Dokusu
  */
 export const dealWithWeaponTexture = (texture: Texture) => {
-    texture.generateMipmaps = true;
-    texture.magFilter = LinearFilter;
-    texture.minFilter = LinearFilter;
-    texture.encoding = sRGBEncoding;
-    texture.flipY = false;
+    texture.generateMipmaps = true; // Mipmap oluşturulacak
+    texture.magFilter = LinearFilter; // Pürüzsüz renk alma
+    texture.minFilter = LinearFilter; // Pürüzsüz renk alma
+    texture.encoding = sRGBEncoding; // SRGB kodlaması
+    texture.flipY = false; // Y ekseninde ters çevirme yapılmaz
 }

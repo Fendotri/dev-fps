@@ -1,25 +1,23 @@
 uniform float uOpacity;
 uniform float uExitTime;
-uniform float uFadeTime;// 渐变消失时间
+uniform float uFadeTime; // Geçişle kaybolma süresi
 uniform sampler2D uBulletHoleT;
 
-varying float vElapsed;// 传递弹点生成时间
+varying float vElapsed; // Atış noktasının oluşturulma süresi
 varying float vRand;// [.5,1.]
 
 void main()
 {
-    
-    float fadeMask=step(uExitTime,vElapsed);// 开始渐变消失为1
+    // Geçiş kaybolma maskesi
+    float fadeMask=step(uExitTime,vElapsed); // Kaybolmaya başlama için 1'e eşitle
     fadeMask*=(vElapsed-uExitTime)/uFadeTime;
     
-    // 性能优化
-    
+    // Performans optimizasyonu    
     if(uOpacity-fadeMask<0.){
         discard;
     }
     
-    // 利用随机数显示4种弹孔其中的一种
-    
+    // Rastgele sayıya göre 4 çeşit atış deliğinden birini göster    
     vec2 pointCoord=gl_PointCoord/2.;
     pointCoord.x+=.5;
     pointCoord.y+=.5;

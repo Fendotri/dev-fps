@@ -27,13 +27,13 @@ void main(){
         discard;
     }
     
-    // 旋转
+    // Döndürme (rotation)
     float rotateRandomFactor=pcurve(vElapsed/uDisapperTime,vRand,vElapsed);
     vec4 randRotate=makeRotationZ(vRand*3.1415926+rotateRandomFactor)*vec4(gl_PointCoord-vec2(.5),0.,1.);// gl.POINTS, (left,top):(0,0) (right, bottom): (1, 1)
     vec4 colorFromT=texture2D(uBulletShellT,randRotate.xy+vec2(.5));// matrix 是用(0, 0)点做中心点进行旋转的
     
-    // 不旋转
-    // vec4 temp=texture2D(uBulletShellT,gl_PointCoord);
+    // Döndürmeden (rotation) yapılan versiyon:
+    // vec4 temp = texture2D(uBulletShellT, gl_PointCoord);
     
     gl_FragColor=colorFromT;
     

@@ -1,11 +1,11 @@
-// 此文件定义涉及与浏览器相关通用函数
+// Bu dosya, tarayıcıyla ilgili genel işlevleri tanımlar
 
 import { GameContext } from '../GameContext';
 
 /**
- * 获取当前三维视图容器的 { 宽, 高, 物理像素/CSS像素比 }
- * @param container 三维视图容器
- * @returns { 宽, 高, 物理像素/CSS像素比 }
+ * Mevcut üç boyutlu görünüm konteynerının { Genişlik, Yükseklik, Fiziksel Piksel / CSS Piksel Oranı }
+ * @param container Üç boyutlu görünüm konteynerı
+ * @returns { Genislik, Yükseklik, Fiziksel Piksel / CSS Piksel Oranı }
  */
 export const getContainerStatus = (container?: HTMLElement): ViewportStatus => {
     if (!container) container = GameContext.GameView.Container;
