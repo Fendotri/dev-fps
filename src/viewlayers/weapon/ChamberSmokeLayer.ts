@@ -19,12 +19,12 @@ const texture = new Texture(image);
 image.src = smokeTexture;
 image.onload = () => { texture.needsUpdate = true; }
 
-// 工具变量
+// Yardımcı değişkenler
 
 const array3Util: Array<number> = new Array<number>(3);
 const array1Util: Array<number> = new Array<number>(1);
 /**
- * 武器开火烟雾效果
+ * Silahın ateş etme sırasında oluşan duman etkisi
  */
 export class ChamberSmokeLayer implements CycleInterface, LoopInterface {
 
@@ -34,16 +34,16 @@ export class ChamberSmokeLayer implements CycleInterface, LoopInterface {
     camera: Camera;
     handModelCamera: Camera;
 
-    maximun: number = 20 * 2; // 最大产生弹壳贴图的数量
+    maximun: number = 20 * 2; // Maksimum duman noktası sayısı
 
     weaponComponentsPositionUtil: WeaponComponentsPositionUtil;
 
-    chamberSmokeOpacityFactor: number = .1; // 透明度
-    chamberSmokeDisapperTime: number = 1.; // 消散时间
-    chamberSmokeFadeTime: number = 1.5; // 消散渐变时间
-    chamberSmokeScale: number = 1.5; // 弹孔大小
-    chamberSmokeSpeed: number = .2; // 烟雾运动速度
-    chamberSmokeDisappearTime: number = .4; // 弹孔存在时间(多少秒后开始渐变消失) Math.sqrt(1.8/9.8) 约等于0.4 
+    chamberSmokeOpacityFactor: number = .1; // Dumanın opaklık faktörü
+    chamberSmokeDisapperTime: number = 1.; // Dumanın kaybolma süresi
+    chamberSmokeFadeTime: number = 1.5; // Dumanın kaybolma geçiş süresi
+    chamberSmokeScale: number = 1.5; // Dumanın boyutu
+    chamberSmokeSpeed: number = .2; // Dumanın hareket hızı
+    chamberSmokeDisappearTime: number = .4; // Dumanın varlık süresi (kaç saniye sonra kaybolmaya başlar)
 
     chamberSmokeGeometry: BufferGeometry = new BufferGeometry();
     chamberSmokeSM: ShaderMaterial = new ShaderMaterial({
@@ -59,16 +59,15 @@ export class ChamberSmokeLayer implements CycleInterface, LoopInterface {
             uScale: { value: this.chamberSmokeScale },
             uDisapperTime: { value: this.chamberSmokeDisappearTime },
         },
-        // depthTest: NeverDepth,
-        depthWrite: false, // 目的是在进行深度检测时自己不会影响自己
+        depthWrite: false, // Derinlik yazımı kapalı çünkü dumanın diğer nesneleri etkilemesini istemiyoruz
         vertexShader: chamberSmokeVert,
         fragmentShader: chamberSmokeFrag,
     });
 
-    positionFoat32Array: Float32Array; // 击中三角面的点位置
-    directionFloat32Array: Float32Array; // 烟雾运动方向
-    generTimeFLoat32Array: Float32Array; // 生成该弹壳的时间
-    randFoat32Array: Float32Array; // 随机种子
+    positionFoat32Array: Float32Array; // Dumanın üçgen yüzeydeki konumları
+    directionFloat32Array: Float32Array; // Dumanın hareket yönü
+    generTimeFLoat32Array: Float32Array; // Dumanın oluşturulma zamanı
+    randFoat32Array: Float32Array; // Rastgele sayılar (tuhaf davranışlar için)
 
     positionBufferAttribute: BufferAttribute;
     directionBufferAttribute: BufferAttribute;
@@ -83,21 +82,21 @@ export class ChamberSmokeLayer implements CycleInterface, LoopInterface {
         this.camera = GameContext.Cameras.PlayerCamera
         this.handModelCamera = GameContext.Cameras.HandModelCamera;
 
-        // 添加弹点精灵
+        // Duman partiküllerini sahneye ekleyelim
 
         const chamberSmokes = new Points(this.chamberSmokeGeometry, this.chamberSmokeSM);
-        chamberSmokes.frustumCulled = false; // 不管如何都会渲染
+        chamberSmokes.frustumCulled = false; // Her durumda render edilsin
         this.scene.add(chamberSmokes);
 
-        // 初始化buffers
+        // Buffers'ı başlatma
 
         this.initBuffers();
 
-        // 当前装备武器的弹舱位置
+        // Silahın mevcut pozisyonunu takip et
 
         this.listenChamberPosition();
 
-        // 监听开火事件
+        // Ateş etme olayını dinle
         LayerEventPipe.addEventListener(ShotOutWeaponFireEvent.type, (e: CustomEvent) => {
             if (this.ifRender) this.render();
         });
@@ -111,19 +110,19 @@ export class ChamberSmokeLayer implements CycleInterface, LoopInterface {
         this.generTimeFLoat32Array = new Float32Array(new ArrayBuffer(4 * this.maximun));
         this.randFoat32Array = new Float32Array(new ArrayBuffer(4 * this.maximun));
 
-        for (let i = 0; i < this.maximun; i++) { // 默认初始化时所有弹点都不显示, 给他们赋予生成时间为-10s
+        for (let i = 0; i < this.maximun; i++) { // Başlangıçta, duman noktalarının hiçbiri görünmesin
             array1Util[0] = -10;
             this.generTimeFLoat32Array.set(array1Util, i);
         }
 
-        // 生成 BufferAttribute
+        // BufferAttribute oluşturuluyor
 
         this.positionBufferAttribute = new BufferAttribute(this.positionFoat32Array, 3);
         this.directionBufferAttribute = new BufferAttribute(this.directionFloat32Array, 3);
         this.generTimeBufferAttribute = new BufferAttribute(this.generTimeFLoat32Array, 1);
         this.randBufferAttribute = new BufferAttribute(this.randFoat32Array, 1);
 
-        // 指定 BufferAttribute
+        // BufferAttribute'leri belirleyelim
 
         this.chamberSmokeGeometry.setAttribute('position', this.positionBufferAttribute);
         this.chamberSmokeGeometry.setAttribute('direction', this.directionBufferAttribute);
@@ -133,7 +132,7 @@ export class ChamberSmokeLayer implements CycleInterface, LoopInterface {
     }
 
     /**
-   * 更新当前装备武器的弹舱位置: 只有定义了弹舱位置的武器才会渲染该层效果
+   * Mevcut silahın namlu pozisyonunu güncelle: Yalnızca namlu pozisyonu tanımlanan silahlar bu katman efektiyle render edilecektir
    */
     listenChamberPosition() {
         this.weaponComponentsPositionUtil = WeaponComponentsPositionUtil.getInstance();
@@ -146,7 +145,7 @@ export class ChamberSmokeLayer implements CycleInterface, LoopInterface {
 
     render() {
 
-        // positions
+        // Konumları güncelleme
 
         this.positionFoat32Array.set(
             this.weaponComponentsPositionUtil.calculateChamberPosition().toArray(array3Util, 0),
@@ -154,28 +153,28 @@ export class ChamberSmokeLayer implements CycleInterface, LoopInterface {
         );
         this.positionBufferAttribute.needsUpdate = true;
 
-        // directions
+        // Yönleri güncelleme
 
-        const rightDirection = this.weaponComponentsPositionUtil.rightDirection; // 烟雾大致向右运动
+        const rightDirection = this.weaponComponentsPositionUtil.rightDirection; // Duman sağa doğru hareket eder
         this.directionFloat32Array.set(
             rightDirection.toArray(array3Util, 0),
             this.chamberSmokeIndex * 3
         );
         this.directionBufferAttribute.needsUpdate = true;
 
-        // genderTimes
+        // Zamanları güncelleme
 
         array1Util[0] = GameContext.GameLoop.Clock.getElapsedTime();
         this.generTimeFLoat32Array.set(array1Util, this.chamberSmokeIndex * 1);
         this.generTimeBufferAttribute.needsUpdate = true;
 
-        // rands
+        // Rastgele sayılar
 
         array1Util[0] = Math.random();
         this.randFoat32Array.set(array1Util, this.chamberSmokeIndex * 1);
         this.randBufferAttribute.needsUpdate = true;
 
-        if (this.chamberSmokeIndex + 1 >= this.maximun) this.chamberSmokeIndex = 0; // 如果index+1超过了设置最大显示弹点的上限,那么就从0开始重新循环
+        if (this.chamberSmokeIndex + 1 >= this.maximun) this.chamberSmokeIndex = 0; // Eğer index  maksimum limitin üzerine çıkarsa, 0'dan başla
         else this.chamberSmokeIndex += 1;
 
     }

@@ -15,93 +15,92 @@ const texture = new Texture(image);
 image.src = flashTexture;
 image.onload = () => { texture.needsUpdate = true; }
 
-const muzzlePositionUtil = new Vector3(); // 枪口位置
+const muzzlePositionUtil = new Vector3(); // Namlu konumu
 const array3Util: Array<number> = new Array<number>(3);
 const array1Util: Array<number> = new Array<number>(1);
 
 /**
- * 枪口火光
+ * Namlu Alevi Efekti
  */
 export class MuzzleFlashLayer implements CycleInterface, LoopInterface {
 
-    ifRender: boolean = false;
+    ifRender: boolean = false; // Efektin render edilip edilmeyeceğini belirler
 
-    scene: Scene;
-    camera: Camera;
+    scene: Scene; // Sahne
+    camera: Camera; // Kamera
 
-    muzzleFlashSize: number = 1.5;
-    muzzleFlashTime: number = .01;
+    muzzleFlashSize: number = 1.5; // Alevin boyutu
+    muzzleFlashTime: number = .01; // Alevin süresi
 
     muzzleFlashGeometry: BufferGeometry = new BufferGeometry();
     muzzleFlashSM: ShaderMaterial = new ShaderMaterial({
         uniforms: {
-            uScale: { value: this.muzzleFlashSize },
-            uTime: { value: -1. },
-            uFireTime: { value: -1. },
-            uOpenFireT: { value: texture },
-            uFlashTime: { value: this.muzzleFlashTime },
+            uScale: { value: this.muzzleFlashSize }, // Boyut
+            uTime: { value: -1. }, // Zaman
+            uFireTime: { value: -1. }, // Ateşleme zamanı
+            uOpenFireT: { value: texture }, // Alev dokusu
+            uFlashTime: { value: this.muzzleFlashTime }, // Alev süresi
         },
         vertexShader: muzzlesflashVert,
         fragmentShader: muzzlesflashFrag,
-        blending: AdditiveBlending,
+        blending: AdditiveBlending, // Ekleme karışım modu
     });
 
-    positionFoat32Array: Float32Array;
+    positionFoat32Array: Float32Array; // Pozisyon verileri
     positionBufferAttribute: BufferAttribute;
-    randFloat32Array: Float32Array;
+    randFloat32Array: Float32Array; // Rastgele değerler
     randBufferAttribute: BufferAttribute;
 
     init(): void {
 
-        // 类指针
+        // Sahne ve kamera tanımlamaları
         this.scene = GameContext.Scenes.Handmodel;
         this.camera = GameContext.Cameras.PlayerCamera;
 
-        // 添加物体至场景
+        // Alev objesini sahneye ekle
         const muzzleFlash = new Points(this.muzzleFlashGeometry, this.muzzleFlashSM);
-        muzzleFlash.frustumCulled = false;
+        muzzleFlash.frustumCulled = false; // Her zaman render edilsin
         this.scene.add(muzzleFlash);
 
-        // 初始化buffers
+        // Buffer'ları başlat
         this.initBuffers();
 
-        // 监听当前武器的枪口位置
+        // Silahın namlu pozisyonunu dinle
         GameLogicEventPipe.addEventListener(WeaponEquipEvent.type, (e: CustomEvent) => {
             const _weaponInstance = WeaponEquipEvent.detail.weaponInstance;
             if (WeaponEquipEvent.detail.weaponInstance && WeaponEquipEvent.detail.weaponInstance.muzzlePosition) {
-                muzzlePositionUtil.copy(_weaponInstance.muzzlePosition); // 判断是否有枪口位置, 有枪口位置就渲染火光
+                muzzlePositionUtil.copy(_weaponInstance.muzzlePosition); // Namlu pozisyonunu kopyala
                 this.ifRender = true;
             }
-            else this.ifRender = false;
+            else this.ifRender = false; // Namlu pozisyonu yoksa efekt render edilmesin
         })
 
-        // 监听渲染事件
+        // Ateşleme olayını dinle
         LayerEventPipe.addEventListener(ShotOutWeaponFireEvent.type, (e: CustomEvent) => {
-            if (this.ifRender) this.render();
+            if (this.ifRender) this.render(); // Efekti render et
         });
     }
 
     initBuffers(): void {
 
-        this.positionFoat32Array = new Float32Array(new ArrayBuffer(4 * 3));
-        this.randFloat32Array = new Float32Array(new ArrayBuffer(4 * 1));
+        this.positionFoat32Array = new Float32Array(new ArrayBuffer(4 * 3)); // Pozisyon için buffer
+        this.randFloat32Array = new Float32Array(new ArrayBuffer(4 * 1)); // Rastgele değerler için buffer
         this.positionBufferAttribute = new BufferAttribute(this.positionFoat32Array, 3);
         this.randBufferAttribute = new BufferAttribute(this.randFloat32Array, 1);
 
-        // 创建几何
-
+        // Geometriyi oluştur
         this.muzzleFlashGeometry.setAttribute('position', this.positionBufferAttribute);
         this.muzzleFlashGeometry.setAttribute('rand', this.randBufferAttribute);
     }
     render() {
-        // 枪口位置
+        // Namlu pozisyonunu set et
         this.positionFoat32Array.set(muzzlePositionUtil.toArray(array3Util, 0), 0);
         this.positionBufferAttribute.needsUpdate = true;
 
-        // 开火时间
+        // Ateşleme zamanını güncelle
         this.muzzleFlashSM.uniforms.uFireTime.value = GameContext.GameLoop.Clock.getElapsedTime();
 
-        // 闪光随机种子
+        // Rastgele bir değer set et
         const rand = Math.random();
         array1Util[0] = rand;
         this.randFloat32Array.set(array1Util, 0);
@@ -109,7 +108,7 @@ export class MuzzleFlashLayer implements CycleInterface, LoopInterface {
     }
 
     callEveryFrame(deltaTime?: number, elapsedTime?: number): void {
-        this.muzzleFlashSM.uniforms.uTime.value = elapsedTime; // 每帧向显卡传入当前渲染时间
+        this.muzzleFlashSM.uniforms.uTime.value = elapsedTime; // Her frame için zaman verisi gönder
     }
 
 }

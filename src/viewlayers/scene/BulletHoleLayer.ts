@@ -16,18 +16,18 @@ const array3Util: Array<number> = new Array<number>(3);
 const array1Util: Array<number> = new Array<number>(1);
 
 /**
- * 弹点渲染
+ * Mermi deliği (bullet hole) efekti render'ı
  */
 export class BulletHoleLayer implements CycleInterface, LoopInterface {
 
     scene: THREE.Scene;
 
-    maximun: number = 40; // 最大产生弹点数量
+    maximun: number = 40; // Maksimum mermi deliği sayısı
 
-    bulletHoleOpacity: number = .8; // 弹孔透明度
-    bulletHoleScale: number = 1.5; // 弹孔大小
-    exitTime: number = 5; // 弹孔存在时间(多少秒后开始渐变消失)
-    fadeTime: number = .5; // 弹孔消失渐变时间
+    bulletHoleOpacity: number = .8; // Mermi deliği şeffaflığı
+    bulletHoleScale: number = 1.5; // Mermi deliği boyutu
+    exitTime: number = 5; // Mermi deliğinin varlık süresi (kaç saniye sonra kaybolmaya başlar)
+    fadeTime: number = .5; // Mermi deliği kaybolma geçiş süresi
 
     bulletHoleGeometry: THREE.BufferGeometry = new BufferGeometry();
     bulletHoleMaterial: THREE.ShaderMaterial = new ShaderMaterial({
@@ -40,89 +40,91 @@ export class BulletHoleLayer implements CycleInterface, LoopInterface {
             uBulletHoleT: { value: texture },
         },
         blending: CustomBlending,
-        depthWrite: false, // 目的是在进行深度检测时自己不会影响自己
+        depthWrite: false, // Derinlik testi yapılırken etkilenmemesi için
         transparent: true,
         vertexShader: bulletHoleVertex,
         fragmentShader: bulletHoleFrag,
     });
 
-    // geometry.attributes 指针用于记录集合体可以复用的buffer
-
-    positionFoat32Array: Float32Array; // 击中三角面的点位置
-    normalFoat32Array: Float32Array; // 击中三角面的法线
-    generTimeFLoat32Array: Float32Array; // 生成该弹点的时间
-    randFoat32Array: Float32Array; // 该弹点的随机大小
+    // Geometriye ait veri tamponları (buffer attributes)
+    positionFoat32Array: Float32Array; // Vurulan yüzeydeki nokta konumları
+    normalFoat32Array: Float32Array; // Vurulan yüzeyin normali
+    generTimeFLoat32Array: Float32Array; // Bu mermi deliğinin oluşturulma zamanı
+    randFoat32Array: Float32Array; // Mermi deliğinin rastgele boyut etkisi
 
     positionBufferAttribute: THREE.BufferAttribute;
     normalBufferAttribute: THREE.BufferAttribute;
     generTimeBufferAttribute: THREE.BufferAttribute;
     randBufferAttribute: THREE.BufferAttribute;
 
-    // 下一发弹点的位置指针
+    // Bir sonraki mermi deliği için pozisyon göstergesi
 
     bulletHoleIndex: number = 0;
 
     init(): void {
 
-        // 绑定指针/初始化
+        // Başlangıç ayarları
         this.scene = GameContext.Scenes.Sprites;
 
-        // 生成 array buffer
+        // Float32Array tamponlarını oluştur
         this.positionFoat32Array = new Float32Array(new ArrayBuffer(4 * 3 * this.maximun));
         this.normalFoat32Array = new Float32Array(new ArrayBuffer(4 * 3 * this.maximun));
         this.generTimeFLoat32Array = new Float32Array(new ArrayBuffer(4 * this.maximun));
         this.randFoat32Array = new Float32Array(new ArrayBuffer(4 * this.maximun));
-        for (let i = 0; i < this.maximun; i++) { // 默认初始化时所有弹点都不显示, 给他们赋予生成时间为-10s
+        for (let i = 0; i < this.maximun; i++) { // Başlangıçta tüm mermi delikleri gizli, bu yüzden oluşturulma zamanı -10 saniye olarak ayarlanır
             array1Util[0] = -10;
             this.generTimeFLoat32Array.set(array1Util, i);
         }
 
-        // 生成 BufferAttribute
+        // BufferAttribute'leri oluştur
         this.positionBufferAttribute = new BufferAttribute(this.positionFoat32Array, 3);
         this.normalBufferAttribute = new BufferAttribute(this.normalFoat32Array, 3);
         this.generTimeBufferAttribute = new BufferAttribute(this.generTimeFLoat32Array, 1);
         this.randBufferAttribute = new BufferAttribute(this.randFoat32Array, 1);
 
-        // 指定 BufferAttribute
+        // BufferAttribute'leri geometriye ekle
         this.bulletHoleGeometry.setAttribute('position', this.positionBufferAttribute);
         this.bulletHoleGeometry.setAttribute('normal', this.normalBufferAttribute);
         this.bulletHoleGeometry.setAttribute('generTime', this.generTimeBufferAttribute);
         this.bulletHoleGeometry.setAttribute('rand', this.randBufferAttribute);
 
-        // 添加弹点精灵
+        // Mermi deliklerini ekle
         const bulletHoles = new Points(this.bulletHoleGeometry, this.bulletHoleMaterial);
-        bulletHoles.frustumCulled = false; // 不管如何都会渲染
+        bulletHoles.frustumCulled = false; // Her durumda render edilmesi için
         this.scene.add(bulletHoles);
+
+        // Mermi düşme olaylarını dinle
         LayerEventPipe.addEventListener(BulletFallenPointEvent.type, (e: CustomEvent) => { this.addPoint(e.detail.fallenPoint, e.detail.fallenNormal); });
     }
 
-    /** 添加弹点的通用方法 */
+    /** Mermi deliği eklemek için kullanılan genel metot */
     addPoint(point: THREE.Vector3, normal: THREE.Vector3) {
-        const random = 0.5 + Math.random() * .5; // 0.5 ~ 1
+        const random = 0.5 + Math.random() * .5; // 0.5 ile 1 arasında rastgele bir değer
 
-        // 弹点位置
+        // Mermi deliği pozisyonu
         this.positionFoat32Array.set(point.toArray(array3Util, 0), this.bulletHoleIndex * 3);
         this.positionBufferAttribute.needsUpdate = true;
 
-        // 弹点法线
+        // Mermi deliği normali
         this.normalFoat32Array.set(normal.toArray(array3Util, 0), this.bulletHoleIndex * 3);
         this.normalBufferAttribute.needsUpdate = true;
 
-        // 弹点生成时间
+        // Mermi deliği oluşturulma zamanı
         array1Util[0] = GameContext.GameLoop.Clock.getElapsedTime();
         this.generTimeFLoat32Array.set(array1Util, this.bulletHoleIndex);
         this.generTimeBufferAttribute.needsUpdate = true;
 
-        // 弹点随机大小影响值
+        // Mermi deliği rastgele boyut etkisi
         array1Util[0] = random;
         this.randFoat32Array.set(array1Util, this.bulletHoleIndex);
         this.randBufferAttribute.needsUpdate = true;
 
-        // 更新index
-        if (this.bulletHoleIndex + 1 >= this.maximun) this.bulletHoleIndex = 0; // 如果index+1超过了设置最大显示弹点的上限,那么就从0开始重新循环
+        // Mermi deliği index'ini güncelle
+        if (this.bulletHoleIndex + 1 >= this.maximun) this.bulletHoleIndex = 0; // Eğer index son limitin üstüne çıkarsa, sıfırdan başla
         else this.bulletHoleIndex += 1;
     }
 
+    // Her karede yapılacak işlemler
     callEveryFrame(deltaTime?: number, elapsedTime?: number): void {
         this.bulletHoleMaterial.uniforms.uTime.value = elapsedTime;
     }

@@ -7,49 +7,49 @@ import { GameLogicEventPipe, WeaponFireEvent } from '@src/gameplay/pipes/GameLog
 import { WeaponInterface } from './WeaponInterface';
 import { LoopOnce, LoopRepeat, MathUtils, Vector2 } from 'three';
 
-const bPointRecoiledScreenCoord: THREE.Vector2 = new Vector2(); // 开火后后坐力影响后的弹点
+const bPointRecoiledScreenCoord: THREE.Vector2 = new Vector2(); // Ateş edildikten sonra geri tepme ile etkilenen mermi noktası
 
 let startRecover: boolean = true;
 let startRecoverLine: number = 0;
-let cameraRotationBasicTotal = 0; // 半自动武器只收到pitch的影响
-let recovercameraRotateTotalX = 0; // 半自动武器只收到pitch的影响
+let cameraRotationBasicTotal = 0; // Yarı otomatik silahlar sadece pitch yönünden etkilenir
+let recovercameraRotateTotalX = 0; // Yarı otomatik silahlar sadece pitch yönünden etkilenir
 
 /**
- * 半自动武器抽象类
+ * Yarı otomatik silahlar için soyut sınıf
  */
 export abstract class SemiAutomaticWeapon implements WeaponInterface {
 
-    private animationMixer: THREE.AnimationMixer; // 动画/网格混合器
-    private weaponSkinnedMesh: THREE.SkinnedMesh; // 武器网格
+    private animationMixer: THREE.AnimationMixer; // Animasyon/Karakter ağı karıştırıcı
+    private weaponSkinnedMesh: THREE.SkinnedMesh; // Silah ağı
     private camera: THREE.Camera = GameContext.Cameras.PlayerCamera;
     private scene: THREE.Scene = GameContext.Scenes.Handmodel;
 
-    // 武器实例状态量
-    lastFireTime: number = 0; // 上一次开火时间(ms)
-    bulletLeftMagzine: number; // 当前弹夹子弹剩余
-    bulletLeftTotal: number; // 总子弹剩余
-    active: boolean = false; // 武器当前是否处于激活状态(当equip动画结束时武器进入active状态)
+    // Silah durum değişkenleri
+    lastFireTime: number = 0; // Son ateş etme zamanı (ms)
+    bulletLeftMagzine: number; // Mevcut şarjörde kalan mermi sayısı
+    bulletLeftTotal: number; // Toplam kalan mermi sayısı
+    active: boolean = false; // Silah şu anda aktif mi (Ekipman animasyonu bittiğinde aktif duruma geçer)
 
-    // 武器属性
-    weaponUUID = MathUtils.generateUUID(); // 该武器对象的唯一标识
-    weaponClassificationEnum: WeaponClassificationEnum; // 武器类型
-    weaponName: string; // 武器名字
-    weaponNameSuffix: string; // 武器后缀名
-    magazineSize: number; // 弹夹容量
-    recoverTime: number; // 弹道恢复时间
+    // Silah özellikleri
+    weaponUUID = MathUtils.generateUUID(); // Bu silah nesnesinin benzersiz kimliği
+    weaponClassificationEnum: WeaponClassificationEnum; // Silah türü
+    weaponName: string; // Silah adı
+    weaponNameSuffix: string; // Silah ek adı
+    magazineSize: number; // Şarjör kapasitesi
+    recoverTime: number; // Mermi yolu geri dönüş süresi
     reloadTime: number;
-    speed: number; // 手持移动速度
-    killaward: number; // 击杀奖励
-    damage: number; // 伤害
-    fireRate: number; // 射速
-    recoilControl: number; // 弹道控制
-    accurateRange: number; // 在accurate range距离内第一发子弹必定会落到30cm内的标靶上
-    armorPenetration: number; // 穿透能力
+    speed: number; // Taşıma hızı
+    killaward: number; // Öldürme ödülü
+    damage: number; // Hasar
+    fireRate: number; // Ateş hızı
+    recoilControl: number; // Geri tepme kontrolü
+    accurateRange: number; // Bu mesafede ilk mermi hedef tahtasında 30 cm içinde olacaktır
+    armorPenetration: number; // Zırh delme yeteneği
 
-    // 半自动武器
+    // Yarı otomatik silahlar
     recoverLine: number = 0;
 
-    // 武器动画
+    // Silah animasyonları
     private equipAnim: THREE.AnimationAction;
     private reloadAnim: THREE.AnimationAction;
     private fireAnim: THREE.AnimationAction;
@@ -57,26 +57,26 @@ export abstract class SemiAutomaticWeapon implements WeaponInterface {
     private viewAnim: THREE.AnimationAction;
 
     init() {
-        // 监听键盘获取的武器事件
+        // Klavye ile tetiklenen silah olaylarını dinleme
         UserInputEventPipe.addEventListener(UserInputEvent.type, (e: CustomEvent) => {
-            if (!this.active) return; // 判断武器是否激活
+            if (!this.active) return; // Silah aktif değilse işlem yapma
             switch (e.detail.enum) {
-                case UserInputEventEnum.BUTTON_RELOAD: // 换弹按键
-                    if (!this.active) return; // 1. 未激活状态下(如处于切枪过程中)不能进行换弹
-                    if (this.magazineSize <= this.bulletLeftMagzine) return; // 2. 当前弹夹子弹是满的不能换弹
+                case UserInputEventEnum.BUTTON_RELOAD: // Yeniden doldurma tuşu
+                    if (!this.active) return; // 1. Silah aktif değilse yeniden doldurulamaz
+                    if (this.magazineSize <= this.bulletLeftMagzine) return; // 2. Şarjör zaten doluysa yeniden doldurulamaz
                     this.active = false;
                     WeaponAnimationEvent.detail.enum = WeaponAnimationEventEnum.RELOAD;
                     WeaponAnimationEvent.detail.weaponInstance = this;
-                    AnimationEventPipe.dispatchEvent(WeaponAnimationEvent); // 触发武器换弹事件
+                    AnimationEventPipe.dispatchEvent(WeaponAnimationEvent); // Silah yeniden doldurma olayı tetiklenir
                     break;
-                case UserInputEventEnum.BUTTON_TRIGGLE_DOWN: // 扣扳机
+                case UserInputEventEnum.BUTTON_TRIGGLE_DOWN: // Tetiği çekme
                     if (!GameContext.PointLock.isLocked) return;
-                    if (!this.active) return; // 非激活状态取消开枪事件接收
-                    if (this.bulletLeftMagzine <= 0) { // 如果子弹不够
+                    if (!this.active) return; // Silah aktif değilse ateş etme işlemi yapılamaz
+                    if (this.bulletLeftMagzine <= 0) { // Eğer mermi kalmamışsa
                         this.active = false;
                         WeaponAnimationEvent.detail.enum = WeaponAnimationEventEnum.RELOAD;
                         WeaponAnimationEvent.detail.weaponInstance = this;
-                        AnimationEventPipe.dispatchEvent(WeaponAnimationEvent); // 触发武器换弹事件
+                        AnimationEventPipe.dispatchEvent(WeaponAnimationEvent); // Yeniden doldurma olayı tetiklenir
                         return;
                     }
                     if (performance.now() - this.lastFireTime >= this.fireRate * 1000) {
@@ -90,19 +90,19 @@ export abstract class SemiAutomaticWeapon implements WeaponInterface {
 
     }
 
-    /** 初始化动画 */
+    /** Animasyonları başlat */
     initAnimation() {
 
-        const equipAnimName = `${this.weaponName}_equip`; // 装备
-        const reloadAnimName = `${this.weaponName}_reload`; // 换弹
-        const fireAnimName = `${this.weaponName}_fire`; // 开火
-        const holdAnimName = `${this.weaponName}_hold`; // 握持
-        const viewAnimName = `${this.weaponName}_view`; // 检视
+        const equipAnimName = `${this.weaponName}_equip`; // Donatma
+        const reloadAnimName = `${this.weaponName}_reload`; // Yeniden doldurma
+        const fireAnimName = `${this.weaponName}_fire`; // Ateş etme
+        const holdAnimName = `${this.weaponName}_hold`; // Tutma
+        const viewAnimName = `${this.weaponName}_view`; // İnceleme
 
-        this.weaponSkinnedMesh = GameContext.GameResources.resourceMap.get(`${this.weaponName}_1`) as THREE.SkinnedMesh; // 武器网格体
-        this.animationMixer = GameContext.GameResources.resourceMap.get('AnimationMixer') as THREE.AnimationMixer; // 动画混合器
+        this.weaponSkinnedMesh = GameContext.GameResources.resourceMap.get(`${this.weaponName}_1`) as THREE.SkinnedMesh; // Silah ağı
+        this.animationMixer = GameContext.GameResources.resourceMap.get('AnimationMixer') as THREE.AnimationMixer; // Animasyon karıştırıcı
 
-        // 将网格体添加到系统中
+        // Ağı sistemi ekleyin
         this.scene.add(this.weaponSkinnedMesh);
 
 
@@ -113,47 +113,47 @@ export abstract class SemiAutomaticWeapon implements WeaponInterface {
         this.fireAnim = GameContext.GameResources.resourceMap.get(fireAnimName) as THREE.AnimationAction;
         if (this.fireAnim) this.fireAnim.loop = LoopOnce;
         this.holdAnim = GameContext.GameResources.resourceMap.get(holdAnimName) as THREE.AnimationAction;
-        if (this.holdAnim) this.holdAnim.loop = LoopRepeat; // 握持动画需要一直显示
+        if (this.holdAnim) this.holdAnim.loop = LoopRepeat; // Tutma animasyonu sürekli oynar
         this.viewAnim = GameContext.GameResources.resourceMap.get(viewAnimName) as THREE.AnimationAction;
         if (this.viewAnim) this.viewAnim.loop = LoopOnce;
 
-        // 当部分动画结束 需要在回调中改变一些参数
+        // Bazı animasyonlar sona erdiğinde parametreleri değiştirmek için geri çağrılar
 
         this.animationMixer.addEventListener('finished', (e: any) => {
             if (e.type === 'finished') {
                 switch (e.action._clip.name) {
-                    case equipAnimName: // 当装备动画结束
-                        this.active = true; // 激活
+                    case equipAnimName: // Donatma animasyonu sona erdiğinde
+                        this.active = true; // Aktif duruma geçer
                         break;
-                    case reloadAnimName: // 当换弹动画结束
-                        this.bulletLeftMagzine = this.magazineSize; // 子弹填满
-                        this.active = true; // 激活
+                    case reloadAnimName: // Yeniden doldurma animasyonu sona erdiğinde
+                        this.bulletLeftMagzine = this.magazineSize; // Şarjör tamamen dolar
+                        this.active = true; // Aktif duruma geçer
                         break;
                 }
             }
         })
 
-        // 接受武器事件回调处理动画
+        // Silah olaylarını kabul et ve animasyonları işle
         AnimationEventPipe.addEventListener(WeaponAnimationEvent.type, (e: CustomEvent) => {
-            if (e.detail.weaponInstance !== this) return; // 只有当前武器的事件才给予响应
+            if (e.detail.weaponInstance !== this) return; // Sadece mevcut silahın olaylarına yanıt ver
             switch (e.detail.enum) {
-                case WeaponAnimationEventEnum.RELIEVE_EQUIP:  // 解除装备
-                    this.weaponSkinnedMesh.visible = false; // 武器不可见
-                    this.active = false; // 未激活
-                    this.animationMixer.stopAllAction(); // 关闭所有正在播放的动画
+                case WeaponAnimationEventEnum.RELIEVE_EQUIP:  // Donatmayı kaldır
+                    this.weaponSkinnedMesh.visible = false; // Silah görünmez hale gelir
+                    this.active = false; // Aktif değil
+                    this.animationMixer.stopAllAction(); // Tüm animasyonları durdur
                     if (this.holdAnim) this.holdAnim.reset();
                     if (this.reloadAnim) this.reloadAnim.reset();
                     if (this.equipAnim) this.equipAnim.reset();
                     if (this.fireAnim) this.fireAnim.reset();
                     if (this.viewAnim) this.viewAnim.reset();
                     break;
-                case WeaponAnimationEventEnum.EQUIP: // 装备
-                    this.weaponSkinnedMesh.visible = true; // 武器可见性
+                case WeaponAnimationEventEnum.EQUIP: // Donatma
+                    this.weaponSkinnedMesh.visible = true; // Silah görünür hale gelir
                     this.holdAnim.play();
                     this.equipAnim.weight = 49;
-                    this.equipAnim.reset(); // 当前武器的装备动画
+                    this.equipAnim.reset(); // Mevcut silahın donatma animasyonu
                     this.equipAnim.play();
-                    this.active = false; // 装备动画播放时属于未激活状态
+                    this.active = false; // Donatma sırasında aktif
                     break;
                 case WeaponAnimationEventEnum.FIRE:
                     this.fireAnim.weight = 49;
@@ -164,28 +164,28 @@ export abstract class SemiAutomaticWeapon implements WeaponInterface {
                     this.reloadAnim.weight = 49;
                     this.reloadAnim.reset();
                     this.reloadAnim.play();
-                    this.active = false; // 换弹时属于未激活状态
+                    this.active = false; // Yeniden doldurma sırasında silah aktif değil
                     break;
             }
         })
     }
 
-    /** 开火 */
+    /** Ateş etme */
     fire(): void {
 
-        if (!startRecover) { // 如果进入过恢复状态
-            cameraRotationBasicTotal = recovercameraRotateTotalX; // 那么相机总改变量要等于恢复后的量
+        if (!startRecover) { // Geri tepme iyileşme durumuna geçtiyse
+            cameraRotationBasicTotal = recovercameraRotateTotalX; // Kamera toplam değişimi iyileşme sonrası miktara eşit olur
         }
 
         const bpX = (1 / this.accurateRange) * (Math.random() - 0.5);
-        const bpY = (1 / this.accurateRange) * Math.random(); // Y轴方向只会往上偏移
+        const bpY = (1 / this.accurateRange) * Math.random(); // Y eksenindeki sapma sadece yukarı doğru olur
 
-        // 相机位置改变
+        // Kamera pozisyon değişikliği
         const deltaPitch = 0.05 * Math.PI * (1 / this.recoilControl);
         this.camera.rotation.x += deltaPitch;
-        cameraRotationBasicTotal += deltaPitch; // 把相机收到弹道图变化的值记录起来
+        cameraRotationBasicTotal += deltaPitch; // Kameranın geri tepme sonucu aldığı değeri kaydet
 
-        // 添加膛线, 越是连发就越不准
+        // Namludaki hat eklenir, seri atış oldukça isabet azalır
         this.recoverLine += this.fireRate;
         const k = ((this.recoverLine / this.fireRate) - 1.0) * 60 / this.recoilControl;
 
@@ -193,11 +193,11 @@ export abstract class SemiAutomaticWeapon implements WeaponInterface {
         const deltaRecoiledY = bpY * k;
         bPointRecoiledScreenCoord.set(deltaRecoiledX, deltaRecoiledY);
 
-        // 发出动画事件
+        // Animasyon olayı tetikle
         WeaponAnimationEvent.detail.enum = WeaponAnimationEventEnum.FIRE;
         WeaponAnimationEvent.detail.weaponInstance = this;
         AnimationEventPipe.dispatchEvent(WeaponAnimationEvent);
-        // 发出开火逻辑事件
+        // Ateş etme mantıksal olayı tetikle
         WeaponFireEvent.detail.bPointRecoiledScreenCoord = bPointRecoiledScreenCoord;
         WeaponFireEvent.detail.weaponInstance = this;
         GameLogicEventPipe.dispatchEvent(WeaponFireEvent);
@@ -208,20 +208,20 @@ export abstract class SemiAutomaticWeapon implements WeaponInterface {
     };
 
     recover(deltaTime?: number, elapsedTime?: number): void {
-        if (this.recoverLine != 0) { // 需要恢复准星
+        if (this.recoverLine != 0) { // Nişangahın iyileştirilmesi gerekiyor
 
-            // 如果是开始恢复的第一帧
+            // Eğer iyileşmenin ilk karesi ise
             if (startRecover) {
-                recovercameraRotateTotalX = cameraRotationBasicTotal; // 记录recovercameraRotateTotalX此次恢复需要恢复的总值
+                recovercameraRotateTotalX = cameraRotationBasicTotal; // recovercameraRotateTotalX'in bu iyileşme sırasında geri dönmesi gereken toplam değeri kaydet
                 startRecoverLine = this.recoverLine;
             }
 
-            let deltaRecoverScale = deltaTime / this.recoverTime; // 每段deltaTime的recover量
+            let deltaRecoverScale = deltaTime / this.recoverTime; // Her deltaTime süresince iyileşme miktarı
             const recoverLineBeforeMinus = this.recoverLine;
             if (this.recoverLine - (deltaRecoverScale * startRecoverLine) > 0) this.recoverLine -= (deltaRecoverScale * startRecoverLine);
-            else { // 如果下一帧就减到<0了
+            else { // Eğer sonraki karede sıfırın altına inecekse
                 deltaRecoverScale = this.recoverLine / startRecoverLine;
-                this.recoverLine = 0; // 膛线插值恢复
+                this.recoverLine = 0; // Geri tepme ara yüzü sıfırlandı
                 cameraRotationBasicTotal = 0;
                 recovercameraRotateTotalX = 0;
             }
@@ -230,7 +230,7 @@ export abstract class SemiAutomaticWeapon implements WeaponInterface {
             const deltaPitch = cameraRotationBasicTotal * recoverLineScale;
             this.camera.rotation.x -= deltaPitch;
             recovercameraRotateTotalX -= deltaPitch;
-            startRecover = false; // 下一帧不是进入恢复状态的第一帧
+            startRecover = false; // Bir sonraki kare iyileşmenin ilk karesi değil
             //
         }
     }

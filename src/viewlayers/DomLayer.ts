@@ -8,47 +8,51 @@ import { PointLockEventEnum } from '../gameplay/abstract/EventsEnum';
 
 
 /**
- * Dom元素的交互层, 控制是否在网页中显示webgl输出, 以及UI事件接口
+ * DOM Katmanı, web sayfasında WebGL çıktısının gösterilip gösterilmeyeceğini kontrol eder ve UI olaylarını yönetir
  */
 export class DOMLayer extends EventTarget implements CycleInterface, LoopInterface {
-    stats: Stats = Stats();
+    stats: Stats = Stats(); // Performans istatistiklerini gösteren nesne
 
     init(): void {
 
-        // 游戏提示和指导
+        // Oyun talimatları ve ipuçları
         const blocker = document.createElement('div');
-        blocker.id = 'blocker';
+        blocker.id = 'blocker'; // Ekranı engelleyen eleman
         const instructions = document.createElement('div');
-        instructions.id = 'instructions'
+        instructions.id = 'instructions' // Talimatları içeren div
         const tip1 = document.createElement('p');
-        tip1.innerHTML = 'CLICK TO PLAY';
+        tip1.innerHTML = 'CLICK TO PLAY'; // Oyun başlatma talimatı
         instructions.appendChild(tip1);
         blocker.appendChild(instructions);
         GameContext.GameView.Container.appendChild(blocker);
 
-        // 将渲染器出图挂载到页面容器上
+        // WebGL render çıktısını sayfa konteynerine ekle
         GameContext.GameView.Container.appendChild(GameContext.GameView.Renderer.domElement);
 
-        // PointLock事件
+        // PointLock (fare kilidi) olayını başlat
         GameContext.PointLock.pointLockListen();
-        instructions.addEventListener('click', () => { if (!GameContext.PointLock.isLocked) GameContext.PointLock.lock(); });
-        DomEventPipe.addEventListener(PointLockEvent.type, (e: CustomEvent) => { // 通过事件通道接收事件
+        instructions.addEventListener('click', () => { if (!GameContext.PointLock.isLocked) GameContext.PointLock.lock(); }); // Kilitli değilse, fareyi kilitle
+
+        // PointLock olaylarını dinle ve uygun işlemi yap
+        DomEventPipe.addEventListener(PointLockEvent.type, (e: CustomEvent) => { 
             switch (e.detail.enum) {
-                case PointLockEventEnum.LOCK: // 锁定事件
-                    instructions.style.display = 'none';
-                    blocker.style.display = 'none';
+                case PointLockEventEnum.LOCK: // Kilitleme olayı
+                    instructions.style.display = 'none'; // Talimatları gizle
+                    blocker.style.display = 'none'; // Engellemeyi gizle
                     break;
-                case PointLockEventEnum.UNLOCK: // 解锁事件
-                    blocker.style.display = 'block';
-                    instructions.style.display = '';
+                case PointLockEventEnum.UNLOCK: // Kilit açma olayı
+                    blocker.style.display = 'block'; // Engellemeyi göster
+                    instructions.style.display = ''; // Talimatları göster
                     break;
             }
         });
+
+        // Performans istatistiklerini sayfada göster
         GameContext.GameView.Container.appendChild(this.stats.dom);
     }
 
     callEveryFrame(deltaTime?: number, elapsedTime?: number): void {
-        this.stats.update();
+        this.stats.update(); // Her frame'de performans istatistiklerini güncelle
     }
 
 }

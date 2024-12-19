@@ -8,51 +8,55 @@ import { CycleInterface } from '../core/inferface/CycleInterface';
 import { LoopInterface } from '../core/inferface/LoopInterface';
 
 /**
- * WebGl输出画面
+ * WebGL çıktı ekranını yöneten katman
  */
 export class GLViewportLayer implements CycleInterface, LoopInterface {
 
-    fxaaPass: ShaderPass = new ShaderPass(FXAAShader);
-    rendererSize: Vector2 = new Vector2();
+    fxaaPass: ShaderPass = new ShaderPass(FXAAShader); // FXAA (Fast Approximate Anti-Aliasing) pass'ı
+    rendererSize: Vector2 = new Vector2(); // Render boyutunu tutan vektör
 
     init(): void {
 
-        GameContext.GameView.Renderer.autoClear = false;
-        GameContext.GameView.Renderer.autoClearDepth = false;
-        GameContext.GameView.Renderer.autoClearStencil = false;
+        // Render ayarlarını yapılandır
+        GameContext.GameView.Renderer.autoClear = false; // Otomatik temizlemeyi devre dışı bırak
+        GameContext.GameView.Renderer.autoClearDepth = false; // Derinlik temizlemeyi devre dışı bırak
+        GameContext.GameView.Renderer.autoClearStencil = false; // Stencil temizlemeyi devre dışı bırak
 
-        // // FXAA(快速近似抗锯齿) 目前版本的threejs的FXAA-shaderpass出了点问题
+        // FXAA (Hızlı Yaklaşık Kenar Yumuşatma) şu anki sürümde bazı sorunlar yaşıyor, bu yüzden şu an devre dışı bırakıldı
         // this.fxaaPass = new ShaderPass(FXAAShader);
         // GameContext.GameView.EffectComposer.addPass(this.fxaaPass);
         // this.updateFXAAUniforms();
-        // window.addEventListener('resize', () => { this.updateFXAAUniforms() }); // resize时需要更新FXAA参数
+        // window.addEventListener('resize', () => { this.updateFXAAUniforms() }); // Pencere yeniden boyutlandırıldığında FXAA parametrelerini güncelle
     }
 
+    // FXAA geçiş parametrelerini güncelle
     updateFXAAUniforms() {
-        GameContext.GameView.Renderer.getSize(this.rendererSize);
-        (this.fxaaPass.material.uniforms['resolution'].value as Vector2).set(1 / this.rendererSize.x, 1 / this.rendererSize.y);
+        GameContext.GameView.Renderer.getSize(this.rendererSize); // Renderer boyutunu al
+        (this.fxaaPass.material.uniforms['resolution'].value as Vector2).set(1 / this.rendererSize.x, 1 / this.rendererSize.y); // FXAA çözünürlüğünü güncelle
     }
 
+    // Her frame'de yapılacak işlemler
     callEveryFrame(deltaTime?: number, elapsedTime?: number): void {
 
-        // 天空盒
+        // Gökyüzü kutusunu render et
         GameContext.GameView.Renderer.render(GameContext.Scenes.Skybox, GameContext.Cameras.PlayerCamera);
-        GameContext.GameView.Renderer.clearDepth();
+        GameContext.GameView.Renderer.clearDepth(); // Derinlik bilgisini temizle
 
-        // 渲染场景
+        // Oyun sahnesini render et
         GameContext.GameView.Renderer.render(GameContext.Scenes.Level, GameContext.Cameras.PlayerCamera);
 
-        // 渲染特效层
+        // Efekt sahnesini render et
         GameContext.GameView.Renderer.render(GameContext.Scenes.Sprites, GameContext.Cameras.PlayerCamera);
-        GameContext.GameView.Renderer.clearDepth();
+        GameContext.GameView.Renderer.clearDepth(); // Derinlik bilgisini temizle
 
-        // 手部模型
+        // El modeli sahnesini render et
         GameContext.GameView.Renderer.render(GameContext.Scenes.Handmodel, GameContext.Cameras.HandModelCamera);
-        GameContext.GameView.Renderer.clearDepth();
+        GameContext.GameView.Renderer.clearDepth(); // Derinlik bilgisini temizle
 
-        // UI
+        // UI (Kullanıcı Arayüzü) sahnesini render et
         GameContext.GameView.Renderer.render(GameContext.Scenes.UI, GameContext.Cameras.UICamera);
 
+        // Efekt kompozisyonunu render et (şu an kullanılmıyor)
         // GameContext.GameView.EffectComposer.render();
     }
 

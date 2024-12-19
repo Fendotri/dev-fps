@@ -6,28 +6,33 @@ import { DoubleSide, MeshBasicMaterial, Vector3 } from 'three';
 
 export class USP extends SemiAutomaticWeapon {
 
-    muzzlePosition: THREE.Vector3 = new Vector3(0.887, 1.079, 0.494);
-    chamberPosition: THREE.Vector3 = new Vector3(0.109, 1.101, 0.579);
+    muzzlePosition: THREE.Vector3 = new Vector3(0.887, 1.079, 0.494); // Namlu pozisyonu
+    chamberPosition: THREE.Vector3 = new Vector3(0.109, 1.101, 0.579); // Kovan pozisyonu
 
     constructor() {
         super();
+        // Silah modelini al
         const skinnedMesh = GameContext.GameResources.resourceMap.get('USP_1');
+        // Silahın dokusunu yükle
         const texture = GameContext.GameResources.textureLoader.load('/weapons/weapon.USP.jpg');
         dealWithWeaponTexture(texture);
+        // Malzemeyi oluştur ve modelin malzemesi olarak ayarla
         const material = new MeshBasicMaterial({ map: texture, side: DoubleSide });
         (skinnedMesh as THREE.SkinnedMesh).material = material;
 
-        this.weaponClassificationEnum = WeaponClassificationEnum.Pistol;
-        this.weaponName = 'USP';
-        this.magazineSize = 12;
-        this.fireRate = 0.17;
-        this.recoverTime = 0.34;
-        this.reloadTime = 2.;
-        this.recoilControl = 5;
-        this.accurateRange = 120;
+        // Silahın özelliklerini ayarla
+        this.weaponClassificationEnum = WeaponClassificationEnum.Pistol; // Silah türü: Tabanca
+        this.weaponName = 'USP'; // Silah adı
+        this.magazineSize = 12; // Şarjör kapasitesi
+        this.fireRate = 0.17; // Ateş hızı
+        this.recoverTime = 0.34; // Geri alma süresi
+        this.reloadTime = 2.0; // Şarjör doldurma süresi
+        this.recoilControl = 5; // Geri tepme kontrolü
+        this.accurateRange = 120; // Doğru menzil
 
-        this.bulletLeftMagzine = this.magazineSize;
+        this.bulletLeftMagzine = this.magazineSize; // Kalan mermi sayısı (şarjör)
 
+        // Başlangıç işlemleri ve animasyonları başlat
         this.init();
         this.initAnimation();
 

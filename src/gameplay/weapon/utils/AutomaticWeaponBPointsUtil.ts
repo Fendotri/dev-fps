@@ -1,110 +1,119 @@
 // https://www.3dmgame.com/gl/3626154_2.html
 
-/** CSGO弹道相关工具 */
+/** CSGO geri tepme (recoil) araçları */
 export class AutomaticWeaponBPointsUtil {
 
     /**
-     * 将CSGO弹道图转化为屏幕坐标系位点
-     * screen coord: 在标准化设备坐标中鼠标的二维坐标, X分量与Y分量应当在-1到1之间
-     * 1. CSGO弹道图第一发为屏幕中点 [0, 0]
-     * 2. 根据弹道图算出子弹之间的偏移量 deltaX,Y(px)
-     * 3. 根据绘制弹道图时屏幕的分辨率缩放2中的偏移量
-     * 4. 根据对屏幕中点的偏移量绘制屏幕坐标系位点
-     * 5. 施加后坐力值影响
+     * CSGO geri tepme diyagramındaki mermi pozisyonlarını ekran koordinatlarına dönüştürür.
+     * Ekran koordinatları: Standartlaştırılmış cihaz koordinatlarında, X ve Y bileşenleri -1 ile 1 arasında olmalıdır.
+     * 1. CSGO geri tepme diyagramındaki ilk mermi ekranın ortasında [0, 0] olarak kabul edilir.
+     * 2. Geri tepme diyagramındaki mermiler arasındaki X, Y kaymalarını (delta) hesaplar.
+     * 3. Diyagramın kaydedildiği ekran çözünürlüğüne göre bu kaymalar ölçeklendirilir.
+     * 4. Ekran merkezine göre kaymalarla ekran koordinatları çizilir.
+     * 5. Geri tepme kuvvetinin etkisi uygulanır.
      * 
-     * @param bulletPositionArray 
-     * @param bulletNumber 
-     * @param rateX 弹道图录制时横向的缩放比率
-     * @param rateY 弹道图录制时纵向的缩放比率
-     * @param recoilForce 后坐力
-     * @returns 
+     * @param bulletPositionArray: Geri tepme diyagramındaki mermi pozisyonlarını içeren dizi
+     * @param bulletNumber: Geri tepme diyagramındaki mermi sayısı
+     * @param rateX: Geri tepme diyagramı kaydedilirken kullanılan yatay ölçekleme oranı
+     * @param rateY: Geri tepme diyagramı kaydedilirken kullanılan dikey ölçekleme oranı
+     * @param recoilForce: Geri tepme kuvveti
+     * @returns: [-1, 1] arasında normalize edilmiş ekran koordinatları içeren dizi
      */
     static bulletPositionArray2ScreenCoordArray = function (bulletPositionArray: number[], bulletNumber: number, rateX: number, rateY: number, recoilForce: number) {
 
-        // 输出
+        // Çıktı için boş bir dizi oluşturuyoruz
         const bulletDeltaArray = []
 
-        let baseX = bulletPositionArray[0]; // 中心点在弹道图中的x坐标
-        let baseY = bulletPositionArray[1]; // 中心点在弹道图中的y坐标
+        let baseX = bulletPositionArray[0]; // Geri tepme diyagramındaki merkezdeki X koordinatı
+        let baseY = bulletPositionArray[1]; // Geri tepme diyagramındaki merkezdeki Y koordinatı
 
-        const pmMX = 960; // 中心点在当前分辨率下屏幕中的x坐标
-        const pmMy = 540; // 中心点在当前分辨率下屏幕中的y坐标
+        const pmMX = 960; // Ekran çözünürlüğünde, ekranın ortasında X koordinatı
+        const pmMy = 540; // Ekran çözünürlüğünde, ekranın ortasında Y koordinatı
 
+        // Her bir mermi için ekran koordinatlarını hesaplıyoruz
         for (let i = 0; i < bulletNumber; i++) {
 
-            // 计算出当前点距离图中中心点x,y坐标的变化量
+            // Merkezden (baseX, baseY) uzaklıkları hesaplıyoruz
 
             let i2_x = bulletPositionArray[2 * i] - baseX;
             let i2_y = bulletPositionArray[2 * i + 1] - baseY;
 
-            // 转换弹道图的缩放比率 X 后坐力系数
+            // Geri tepme ve ölçekleme oranlarını uyguluyoruz
 
             i2_x = i2_x * rateX * recoilForce;
             i2_y = i2_y * rateY * recoilForce;
+
+            // Ekran koordinatlarına yerleştiriyoruz
 
             bulletDeltaArray[2 * i] = pmMX + i2_x;
             bulletDeltaArray[2 * i + 1] = pmMy - i2_y;
 
         }
 
+        // Ekran koordinatlarını normalize ediyoruz
         for (let i = 0; i < bulletNumber; i++) {
             bulletDeltaArray[2 * i] = (bulletDeltaArray[2 * i] - 960) / 960;
             bulletDeltaArray[2 * i + 1] = (bulletDeltaArray[2 * i + 1] - 540) / 540;
         }
 
+        // Sonuç olarak normalize edilmiş koordinatları döndürüyoruz
         return bulletDeltaArray;
     }
 
 
     /**
-     * 将CSGO弹道图变化量位移转化为屏幕坐标系位点
-     * screen coord: 在标准化设备坐标中鼠标的二维坐标, X分量与Y分量应当在-1到1之间
-     * 1. CSGO弹道图第一发为屏幕中点 [0, 0]
-     * 2. 根据弹道图算出子弹之间的偏移量 deltaX,Y(px)
-     * 3. 根据绘制弹道图时屏幕的分辨率缩放2中的偏移量
-     * 4. 根据对屏幕中点的偏移量绘制屏幕坐标系位点
-     * 5. 施加后坐力值影响
+     * CSGO geri tepme diyagramındaki mermilerin değişim pozisyonlarını ekran koordinatlarına dönüştürür.
+     * Ekran koordinatları: Standartlaştırılmış cihaz koordinatlarında, X ve Y bileşenleri -1 ile 1 arasında olmalıdır.
+     * 1. CSGO geri tepme diyagramındaki ilk mermi ekranın ortasında [0, 0] olarak kabul edilir.
+     * 2. Geri tepme diyagramındaki mermiler arasındaki X, Y kaymalarını (delta) hesaplar.
+     * 3. Diyagramın kaydedildiği ekran çözünürlüğüne göre bu kaymalar ölçeklendirilir.
+     * 4. Ekran merkezine göre kaymalarla ekran koordinatları çizilir.
+     * 5. Geri tepme kuvvetinin etkisi uygulanır.
      * 
-     * @param bulletPositionArray 
-     * @param bulletNumber 
-     * @param rateX 弹道图录制时横向的缩放比率
-     * @param rateY 弹道图录制时纵向的缩放比率
-     * @param recoilForce 后坐力
-     * @returns 
+     * @param bulletPositionArray: Geri tepme diyagramındaki mermi pozisyonlarını içeren dizi
+     * @param bulletNumber: Geri tepme diyagramındaki mermi sayısı
+     * @param rateX: Geri tepme diyagramı kaydedilirken kullanılan yatay ölçekleme oranı
+     * @param rateY: Geri tepme diyagramı kaydedilirken kullanılan dikey ölçekleme oranı
+     * @param recoilForce: Geri tepme kuvveti
+     * @returns: [-1, 1] arasında normalize edilmiş ekran koordinatları içeren dizi
      */
     static bulletDeltaPositionArray2ScreenCoordArray = function (bulletPositionArray: number[], bulletNumber: number, rateX: number, rateY: number, recoilForce: number) {
 
-        // 输出
+        // Çıktı için boş bir dizi oluşturuyoruz
         const bulletDeltaArray = []
 
-        let baseX = bulletPositionArray[0]; // 中心点在弹道图中的x坐标
-        let baseY = bulletPositionArray[1]; // 中心点在弹道图中的y坐标
+        let baseX = bulletPositionArray[0]; // Geri tepme diyagramındaki merkezdeki X koordinatı
+        let baseY = bulletPositionArray[1]; // Geri tepme diyagramındaki merkezdeki Y koordinatı
 
-        const pmMX = 960; // 中心点在当前分辨率下屏幕中的x坐标
-        const pmMy = 540; // 中心点在当前分辨率下屏幕中的y坐标
+        const pmMX = 960; // Ekran çözünürlüğünde, ekranın ortasında X koordinatı
+        const pmMy = 540; // Ekran çözünürlüğünde, ekranın ortasında Y koordinatı
 
+        // Her bir mermi için ekran koordinatlarını hesaplıyoruz
         for (let i = 0; i < bulletNumber; i++) {
 
-            // 计算出当前点距离图中中心点x,y坐标的变化量
+            // Merkezden (baseX, baseY) uzaklıkları hesaplıyoruz
 
             let i2_x = bulletPositionArray[2 * i] - baseX;
             let i2_y = bulletPositionArray[2 * i + 1] - baseY;
 
-            // 转换弹道图的缩放比率 X 后坐力系数
+            // Geri tepme ve ölçekleme oranlarını uyguluyoruz
 
             i2_x = i2_x * rateX * recoilForce;
             i2_y = i2_y * rateY * recoilForce;
 
+            // Ekran koordinatlarına yerleştiriyoruz
             bulletDeltaArray[2 * i] = pmMX + i2_x;
             bulletDeltaArray[2 * i + 1] = pmMy - i2_y;
 
         }
 
+        // Ekran koordinatlarını normalize ediyoruz
         for (let i = 0; i < bulletNumber; i++) {
             bulletDeltaArray[2 * i] = (bulletDeltaArray[2 * i] - 960) / 960;
             bulletDeltaArray[2 * i + 1] = (bulletDeltaArray[2 * i + 1] - 540) / 540;
         }
 
+        // İlk mermiyi referans alarak diğer mermilerin değişim pozisyonlarını hesaplıyoruz
         let baseXResolved = bulletDeltaArray[0];
         let baseYResolved = bulletDeltaArray[1];
 
@@ -121,6 +130,7 @@ export class AutomaticWeaponBPointsUtil {
 
         }
 
+        // Sonuç olarak normalize edilmiş değişim pozisyonlarını döndürüyoruz
         return bulletDeltaArray;
     }
 

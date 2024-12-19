@@ -1,44 +1,45 @@
 
-import upVert from '@assets/shaders/crosshair/up.vert?raw' // 上
-import downVert from '@assets/shaders/crosshair/down.vert?raw' // 下
-import leftVert from '@assets/shaders/crosshair/left.vert?raw' // 左
-import rightVert from '@assets/shaders/crosshair/right.vert?raw' // 右
+import upVert from '@assets/shaders/crosshair/up.vert?raw' // Üst
+import downVert from '@assets/shaders/crosshair/down.vert?raw' // Alt
+import leftVert from '@assets/shaders/crosshair/left.vert?raw' // Sol
+import rightVert from '@assets/shaders/crosshair/right.vert?raw' // Sağ
 import crossFrag from '@assets/shaders/crosshair/cross.frag?raw'
 
 import { GameContext } from '@src/core/GameContext'
 import { CycleInterface } from '@src/core/inferface/CycleInterface'
 import { BufferAttribute, BufferGeometry, Color, CustomBlending, DoubleSide, Mesh, ShaderMaterial } from 'three'
 
-const indexes = new Uint16Array([0, 2, 1, 2, 3, 1]);
-const normals = new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]);
-const positions = new Float32Array([-.5, .5, 0, .5, .5, 0, -.5, -.5, 0, .5, -.5, 0]);
-const geom = new BufferGeometry();
+// Geometri için kullanılan diziler
+const indexes = new Uint16Array([0, 2, 1, 2, 3, 1]); // Üçgenlerin indeksleri
+const normals = new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]); // Yüzey normalleri
+const positions = new Float32Array([-.5, .5, 0, .5, .5, 0, -.5, -.5, 0, .5, -.5, 0]); // Köşe noktaları
+const geom = new BufferGeometry(); // Geometri nesnesi
 
 
 /**
- * 准星显示:
- * 1. 定义参数: 颜色,长短,粗细,alpha,中心点,分离度,准星状态
- * 2. 在场景中塞4个PlaneMesh, 并用正交相机渲染4个planeMesh
- * 3. 定义PlaneMesh的shader, 用GPU计算准星位置并显示
+ * 1. Parametreleri tanımla: renk, uzunluk, kalınlık, alfa, merkez noktası, aralık, hedef işaretinin stili
+ * 2. Sahneye 4 adet PlaneMesh ekle ve her birini ortogonal kamera ile render et
+ * 3. PlaneMesh shader'larını tanımla, GPU üzerinde hedef işaretinin konumunu hesapla ve göster
  */
 export class CrosshairLayer implements CycleInterface {
 
     scene: THREE.Scene;
     camera: THREE.Camera;
 
-    crossMaterials: THREE.ShaderMaterial[] = [];
+    crossMaterials: THREE.ShaderMaterial[] = []; // Hedef işareti malzemeleri
 
-    crosshaircolor = new Color(0, 1, 0); // 颜色
-    crosshairsize = .02; // 长短
-    crosshairthinkness = .004; // 粗细
-    crosshairalpha = .8; // alpha
-    crosshairdot = false; // 中心点
-    crosshairgap = .01; // 分离度
-    crosshairstyle = 4; // 0默认 1默认静态 2经典 3经典动态 4经典静态
+    crosshaircolor = new Color(0, 1, 0); // Renk
+    crosshairsize = .02; // Boyut
+    crosshairthinkness = .004; // Kalınlık
+    crosshairalpha = .8; // Alfa değeri
+    crosshairdot = false; // Merkez noktası
+    crosshairgap = .01; // Aralık
+    crosshairstyle = 4; // 0: varsayılan, 1: statik, 2: klasik, 3: klasik dinamik, 4: klasik statik
 
-    uniforms: {};
+    uniforms: {}; // Shader değişkenleri
 
     init(): void {
+        // Sahne ve kamera ayarları
         this.scene = GameContext.Scenes.UI;
         this.uniforms = {
             uColor: { value: this.crosshaircolor },
@@ -49,24 +50,27 @@ export class CrosshairLayer implements CycleInterface {
             uAspect: { value: GameContext.Cameras.PlayerCamera.aspect }
         }
 
-        const crossMaterial1 = new ShaderMaterial({ uniforms: this.uniforms, vertexShader: upVert, fragmentShader: crossFrag }); // 上
-        const crossMaterial2 = new ShaderMaterial({ uniforms: this.uniforms, vertexShader: downVert, fragmentShader: crossFrag }); // 下
-        const crossMaterial3 = new ShaderMaterial({ uniforms: this.uniforms, vertexShader: leftVert, fragmentShader: crossFrag }); // 左
-        const crossMaterial4 = new ShaderMaterial({ uniforms: this.uniforms, vertexShader: rightVert, fragmentShader: crossFrag }); // 右
+        // 4 adet hedef işareti materyali oluştur
+        const crossMaterial1 = new ShaderMaterial({ uniforms: this.uniforms, vertexShader: upVert, fragmentShader: crossFrag }); // Üst
+        const crossMaterial2 = new ShaderMaterial({ uniforms: this.uniforms, vertexShader: downVert, fragmentShader: crossFrag }); // Alt
+        const crossMaterial3 = new ShaderMaterial({ uniforms: this.uniforms, vertexShader: leftVert, fragmentShader: crossFrag }); // Sol
+        const crossMaterial4 = new ShaderMaterial({ uniforms: this.uniforms, vertexShader: rightVert, fragmentShader: crossFrag }); // Sağ
 
-        window.addEventListener('resize', () => { // 找到当前渲染的aspect
+        // Kamera boyutları değiştiğinde uniform'ları güncelle
+        window.addEventListener('resize', () => { 
             crossMaterial1.uniforms.uAspect.value = GameContext.Cameras.PlayerCamera.aspect;
             crossMaterial2.uniforms.uAspect.value = GameContext.Cameras.PlayerCamera.aspect;
             crossMaterial3.uniforms.uAspect.value = GameContext.Cameras.PlayerCamera.aspect;
             crossMaterial4.uniforms.uAspect.value = GameContext.Cameras.PlayerCamera.aspect;
         });
 
-        // 定义4个顶点两个三角面
+        // 4 adet plane mesh için geometri tanımlaması
 
-        geom.setIndex(new BufferAttribute(indexes, 1));
-        geom.setAttribute('position', new BufferAttribute(positions, 3));
-        geom.setAttribute('normal', new BufferAttribute(normals, 3));
+        geom.setIndex(new BufferAttribute(indexes, 1)); // İndeksler
+        geom.setAttribute('position', new BufferAttribute(positions, 3)); // Konumlar
+        geom.setAttribute('normal', new BufferAttribute(normals, 3)); // Normaller
 
+        // Mesh oluştur ve sahneye ekle
         const cross1 = new Mesh(geom, crossMaterial1);
         const cross2 = new Mesh(geom, crossMaterial2);
         const cross3 = new Mesh(geom, crossMaterial3);
@@ -82,17 +86,18 @@ export class CrosshairLayer implements CycleInterface {
         this.crossMaterials.push(crossMaterial3);
         this.crossMaterials.push(crossMaterial4);
 
+        // Malzemelere özel özellikler ekle
         this.crossMaterials.forEach(item => {
             item.blending = CustomBlending;
             // item.depthTest = THREE.NeverDepth;
-            item.side = DoubleSide;
-            item.dithering = true;
-            item.transparent = true;
+            item.side = DoubleSide; // Hem ön hem arka yüzey
+            item.dithering = true; // Dithering etkin
+            item.transparent = true; // Saydamlık etkin
         })
 
     }
 
-
+    // Hedef işaretinin aralığını ayarlamak için fonksiyon
     setGap(gapSize: number) {
         if (this.uniforms['uGap']) this.uniforms['uGap'].value = gapSize;
     }
